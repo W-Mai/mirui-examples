@@ -18,6 +18,7 @@ use mirui::ecs::{Entity, World};
 use mirui::layout::*;
 use mirui::types::Color;
 use mirui::widget::builder::WidgetBuilder;
+use mirui::widget::dirty::Dirty;
 use mirui::widget::render_system;
 use mirui::widget::Style;
 
@@ -26,6 +27,148 @@ esp_bootloader_esp_idf::esp_app_desc!();
 const W: u16 = 128;
 const H: u16 = 128;
 
+// === Components ===
+struct Velocity { vx: i32, vy: i32 }
+struct PhysicsBody { x: i32, y: i32 }
+struct FrameCounter(u32);
+struct BodyEntities([Entity; 3]);
+
+// === Systems ===
+fn three_body_system(world: &mut World) {
+    const EQUILIBRIUM: i32 = 30;
+
+    let root = Entity { id: 0, generation: 0 };
+    let entities = match world.get::<BodyEntities>(root) {
+        Some(b) => b.0,
+        None => return,
+    };
+
+    let mut positions = [(0i32, 0i32); 3];
+    for i in 0..3 {
+        if let Some(body) = world.get::<PhysicsBody>(entities[i]) {
+            positions[i] = (body.x, body.y);
+        }
+    }
+
+    let mut ax = [0i32; 3];
+    let mut ay = [0i32; 3];
+    for i in 0..3 {
+        for j in (i+1)..3 {
+            let dx = positions[j].0 - positions[i].0;
+            let dy = positions[j].1 - positions[i].1;
+            let dist = isqrt(((dx/256)*(dx/256) + (dy/256)*(dy/256)) as u32) as i32;
+            if dist == 0 { continue; }
+            let force = 60 * (dist - EQUILIBRIUM) / dist.max(1);
+            let fx = (force * (dx / 256)) / dist;
+            let fy = (force * (dy / 256)) / dist;
+            ax[i] += fx; ay[i] += fy;
+            ax[j] -= fx; ay[j] -= fy;
+        }
+    }
+
+    for i in 0..3 {
+        let e = entities[i];
+        if let Some(vel) = world.get_mut::<Velocity>(e) {
+            vel.vx += ax[i];
+            vel.vy += ay[i];
+            vel.vx = vel.vx.clamp(-600, 600);
+            vel.vy = vel.vy.clamp(-600, 600);
+        }
+        let (vx, vy) = world.get::<Velocity>(e).map(|v| (v.vx, v.vy)).unwrap_or((0,0));
+        if let Some(body) = world.get_mut::<PhysicsBody>(e) {
+            body.x += vx;
+            body.y += vy;
+            let min = 8 * 256;
+            let max_x = (W as i32 - 8) * 256;
+            let max_y = (H as i32 - 8) * 256;
+            if body.x < min { body.x = min; }
+            if body.x > max_x { body.x = max_x; }
+            if body.y < min { body.y = min; }
+            if body.y > max_y { body.y = max_y; }
+        }
+        if let Some(body) = world.get::<PhysicsBody>(e) {
+            let bx = body.x; let by = body.y;
+            if let Some(vel) = world.get_mut::<Velocity>(e) {
+                if bx <= 8*256 || bx >= (W as i32 -8)*256 { vel.vx = -vel.vx; }
+                if by <= 8*256 || by >= (H as i32 -8)*256 { vel.vy = -vel.vy; }
+            }
+        }
+    }
+}
+
+fn kick_system(world: &mut World) {
+    let root = Entity { id: 0, generation: 0 };
+    let fc = world.get::<FrameCounter>(root).map(|f| f.0).unwrap_or(0);
+    let entities = match world.get::<BodyEntities>(root) {
+        Some(b) => b.0,
+        None => return,
+    };
+    if fc % 40 == 0 {
+        let kick_idx = (fc / 40) as usize % 3;
+        let kick_dir = (fc / 120) as i32;
+        let e = entities[kick_idx];
+        if let Some(vel) = world.get_mut::<Velocity>(e) {
+            vel.vx += ((kick_dir * 7) % 13 - 6) * 80;
+            vel.vy += ((kick_dir * 11) % 13 - 6) * 80;
+        }
+    }
+}
+
+fn sync_layout_system(world: &mut World) {
+    let iw = IMG_THUMBS_UP_WIDTH as i32;
+    let ih = IMG_THUMBS_UP_HEIGHT as i32;
+    let root = Entity { id: 0, generation: 0 };
+    let entities = match world.get::<BodyEntities>(root) {
+        Some(b) => b.0,
+        None => return,
+    };
+    for i in 0..3 {
+        let e = entities[i];
+        let (bx, by) = world.get::<PhysicsBody>(e)
+            .map(|b| (b.x / 256 - iw / 2, b.y / 256 - ih / 2))
+            .unwrap_or((0, 0));
+        let changed = world.get::<Style>(e)
+            .map(|s| s.layout.left != Some(bx) || s.layout.top != Some(by))
+            .unwrap_or(false);
+        if changed {
+            // Mark dirty at OLD position first
+            world.insert(e, Dirty);
+        }
+    }
+}
+
+fn sync_layout_apply_system(world: &mut World) {
+    let iw = IMG_THUMBS_UP_WIDTH as i32;
+    let ih = IMG_THUMBS_UP_HEIGHT as i32;
+    let root = Entity { id: 0, generation: 0 };
+    let entities = match world.get::<BodyEntities>(root) {
+        Some(b) => b.0,
+        None => return,
+    };
+    for i in 0..3 {
+        let e = entities[i];
+        let (bx, by) = world.get::<PhysicsBody>(e)
+            .map(|b| (b.x / 256 - iw / 2, b.y / 256 - ih / 2))
+            .unwrap_or((0, 0));
+        if let Some(style) = world.get_mut::<Style>(e) {
+            if style.layout.left != Some(bx) || style.layout.top != Some(by) {
+                style.layout.left = Some(bx);
+                style.layout.top = Some(by);
+                // Mark dirty at NEW position
+                world.insert(e, Dirty);
+            }
+        }
+    }
+}
+
+fn frame_counter_system(world: &mut World) {
+    let e = Entity { id: 0, generation: 0 };
+    if let Some(fc) = world.get_mut::<FrameCounter>(e) {
+        fc.0 = fc.0.wrapping_add(1);
+    }
+}
+
+// === LCD Driver ===
 struct St7735<'a> {
     spi: Spi<'a, esp_hal::Blocking>,
     dc: Output<'a>,
@@ -82,232 +225,20 @@ impl<'a> St7735<'a> {
         self.cs.set_high();
     }
 }
+
 fn delay_ms(ms: u32) { for _ in 0..ms { for _ in 0..16_000u32 { core::hint::spin_loop(); } } }
+
+fn isqrt(n: u32) -> u32 {
+    if n == 0 { return 0; }
+    let mut x = n; let mut y = (x + 1) / 2;
+    while y < x { x = y; y = (x + n / x) / 2; } x
+}
 
 fn systimer_now() -> u32 {
     let val: u32;
     unsafe { core::arch::asm!("csrr {}, 0x7E2", out(reg) val); }
     val
 }
-
-fn isqrt(n: u32) -> u32 {
-    if n == 0 { return 0; }
-    let mut x = n;
-    let mut y = (x + 1) / 2;
-    while y < x { x = y; y = (x + n / x) / 2; }
-    x
-}
-
-struct Body { x: i32, y: i32, vx: i32, vy: i32 }
-
-fn three_body_step(bodies: &mut [Body; 3]) {
-    const EQUILIBRIUM: i32 = 30;
-    let mut ax = [0i32; 3];
-    let mut ay = [0i32; 3];
-
-    for i in 0..3 {
-        for j in (i+1)..3 {
-            let dx = bodies[j].x - bodies[i].x;
-            let dy = bodies[j].y - bodies[i].y;
-            let dist = isqrt(((dx/256)*(dx/256) + (dy/256)*(dy/256)) as u32) as i32;
-            if dist == 0 { continue; }
-            let force = 60 * (dist - EQUILIBRIUM) / dist.max(1);
-            let fx = (force * (dx / 256)) / dist;
-            let fy = (force * (dy / 256)) / dist;
-            ax[i] += fx; ay[i] += fy;
-            ax[j] -= fx; ay[j] -= fy;
-        }
-    }
-
-    for i in 0..3 {
-        bodies[i].vx += ax[i];
-        bodies[i].vy += ay[i];
-        let max_v: i32 = 600;
-        bodies[i].vx = bodies[i].vx.clamp(-max_v, max_v);
-        bodies[i].vy = bodies[i].vy.clamp(-max_v, max_v);
-        bodies[i].x += bodies[i].vx;
-        bodies[i].y += bodies[i].vy;
-
-        let min = 8 * 256;
-        let max_x = (W as i32 - 8) * 256;
-        let max_y = (H as i32 - 8) * 256;
-        if bodies[i].x < min { bodies[i].x = min; bodies[i].vx = bodies[i].vx.abs(); }
-        if bodies[i].x > max_x { bodies[i].x = max_x; bodies[i].vx = -bodies[i].vx.abs(); }
-        if bodies[i].y < min { bodies[i].y = min; bodies[i].vy = bodies[i].vy.abs(); }
-        if bodies[i].y > max_y { bodies[i].y = max_y; bodies[i].vy = -bodies[i].vy.abs(); }
-    }
-}
-
-#[esp_hal::main]
-fn main() -> ! {
-    esp_alloc::heap_allocator!(size: 200 * 1024);
-    let peripherals = esp_hal::init(esp_hal::Config::default());
-    let spi = Spi::new(peripherals.SPI2, SpiConfig::default().with_frequency(Rate::from_mhz(26)).with_mode(SpiMode::_0)).unwrap().with_sck(peripherals.GPIO5).with_mosi(peripherals.GPIO4);
-    let cs = Output::new(peripherals.GPIO6, Level::High, OutputConfig::default());
-    let dc = Output::new(peripherals.GPIO7, Level::Low, OutputConfig::default());
-    let mut rst = Output::new(peripherals.GPIO3, Level::High, OutputConfig::default());
-    let mut bl = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());
-    let mut lcd = St7735 { spi, dc, cs };
-    lcd.init(&mut rst);
-    bl.set_high();
-
-    // Build UI with ECS
-    let mut world = World::new();
-
-    let header = WidgetBuilder::new(&mut world)
-        .bg_color(Color::rgb(88, 166, 255)).text("mirui").border_radius(3)
-        .layout(LayoutStyle { height: Some(20), ..Default::default() })
-        .id();
-
-    let left = WidgetBuilder::new(&mut world)
-        .bg_color(Color::rgb(63, 185, 80))
-        .layout(LayoutStyle { grow: 1.0, ..Default::default() })
-        .id();
-    let right = WidgetBuilder::new(&mut world)
-        .bg_color(Color::rgb(248, 81, 73))
-        .layout(LayoutStyle { grow: 1.0, ..Default::default() })
-        .id();
-    let row = WidgetBuilder::new(&mut world)
-        .layout(LayoutStyle { direction: FlexDirection::Row, grow: 1.0, ..Default::default() })
-        .child(left).child(right)
-        .id();
-
-    let footer = WidgetBuilder::new(&mut world)
-        .bg_color(Color::rgb(210, 168, 255)).text("3-body")
-        .layout(LayoutStyle { height: Some(20), ..Default::default() })
-        .id();
-
-    // 3 image widgets with absolute positioning
-    let iw = IMG_THUMBS_UP_WIDTH;
-    let ih = IMG_THUMBS_UP_HEIGHT;
-    let mut img_entities = [Entity { id: 0, generation: 0 }; 3];
-    for i in 0..3 {
-        let e = WidgetBuilder::new(&mut world)
-            .layout(LayoutStyle {
-                position: Position::Absolute,
-                left: Some(56),
-                top: Some(56),
-                width: Some(iw),
-                height: Some(ih),
-                ..Default::default()
-            })
-            .id();
-        world.insert(e, Image::new(Vec::from(IMG_THUMBS_UP), iw, ih));
-        img_entities[i] = e;
-    }
-
-    let root = WidgetBuilder::new(&mut world)
-        .bg_color(Color::rgb(30, 30, 46))
-        .layout(LayoutStyle { direction: FlexDirection::Column, width: Some(W), height: Some(H), ..Default::default() })
-        .child(header).child(row).child(footer)
-        .child(img_entities[0]).child(img_entities[1]).child(img_entities[2])
-        .id();
-
-    // Initial full render
-    let mut rgba = vec![0u8; W as usize * H as usize * 4];
-    let mut renderer = SwRenderer::new(&mut rgba, W as u32, H as u32);
-    render_system::render(&world, root, W, H, 1, &mut renderer);
-    lcd.push_pixels(&{
-        let mut buf = vec![0u8; W as usize * H as usize * 2];
-        for i in 0..(W as usize * H as usize) {
-            let r = rgba[i*4] as u16; let g = rgba[i*4+1] as u16; let b = rgba[i*4+2] as u16;
-            let px = ((r>>3)<<11)|((g>>2)<<5)|(b>>3);
-            buf[i*2] = (px>>8) as u8; buf[i*2+1] = px as u8;
-        }
-        buf
-    });
-
-    // Physics init
-    let cx = (W as i32 / 2) * 256;
-    let cy = (H as i32 / 2) * 256;
-    let r = 30 * 256;
-    let mut bodies = [
-        Body { x: cx, y: cy - r, vx: 350, vy: 0 },
-        Body { x: cx - r * 7 / 8, y: cy + r / 2, vx: -175, vy: 300 },
-        Body { x: cx + r * 7 / 8, y: cy + r / 2, vx: -175, vy: -300 },
-    ];
-
-    let mut frame: u32 = 0;
-    let mut fps_display: u32 = 0;
-    let mut fps_count: u32 = 0;
-    let mut last_time = systimer_now();
-
-    loop {
-        frame = frame.wrapping_add(1);
-        fps_count += 1;
-        let now = systimer_now();
-        if now.wrapping_sub(last_time) >= 160_000_000 {
-            fps_display = fps_count;
-            fps_count = 0;
-            last_time = now;
-        }
-
-        // Physics step
-        for _ in 0..4 { three_body_step(&mut bodies); }
-        if frame % 40 == 0 {
-            let kick_idx = (frame / 40) as usize % 3;
-            let kick_dir = (frame / 120) as i32;
-            bodies[kick_idx].vx += ((kick_dir * 7) % 13 - 6) * 80;
-            bodies[kick_idx].vy += ((kick_dir * 11) % 13 - 6) * 80;
-        }
-
-        // Update positions, track old rects for dirty
-        let mut dirty_x0 = W as i32;
-        let mut dirty_y0 = H as i32;
-        let mut dirty_x1: i32 = 0;
-        let mut dirty_y1: i32 = 0;
-
-        for i in 0..3 {
-            // Old position contributes to dirty
-            if let Some(style) = world.get::<Style>(img_entities[i]) {
-                let ox = style.layout.left.unwrap_or(0);
-                let oy = style.layout.top.unwrap_or(0);
-                dirty_x0 = dirty_x0.min(ox);
-                dirty_y0 = dirty_y0.min(oy);
-                dirty_x1 = dirty_x1.max(ox + iw as i32);
-                dirty_y1 = dirty_y1.max(oy + ih as i32);
-            }
-
-            let bx = bodies[i].x / 256 - iw as i32 / 2;
-            let by = bodies[i].y / 256 - ih as i32 / 2;
-
-            // New position contributes to dirty
-            dirty_x0 = dirty_x0.min(bx);
-            dirty_y0 = dirty_y0.min(by);
-            dirty_x1 = dirty_x1.max(bx + iw as i32);
-            dirty_y1 = dirty_y1.max(by + ih as i32);
-
-            if let Some(style) = world.get_mut::<Style>(img_entities[i]) {
-                style.layout.left = Some(bx);
-                style.layout.top = Some(by);
-            }
-        }
-
-        // Clamp dirty rect
-        dirty_x0 = dirty_x0.max(0);
-        dirty_y0 = dirty_y0.max(0);
-        dirty_x1 = dirty_x1.min(W as i32);
-        dirty_y1 = dirty_y1.min(H as i32);
-        let dw = (dirty_x1 - dirty_x0) as u16;
-        let dh = (dirty_y1 - dirty_y0) as u16;
-
-        if dw > 0 && dh > 0 {
-            let dr = mirui::types::Rect { x: dirty_x0, y: dirty_y0, w: dw, h: dh };
-
-            // Render only dirty region
-            let mut renderer = SwRenderer::new(&mut rgba, W as u32, H as u32);
-            render_system::render_region(&world, root, W, H, 1, &dr, &mut renderer);
-
-            // Push only dirty region
-            lcd.push_region(&rgba, W, dirty_x0 as u16, dirty_y0 as u16, dw, dh);
-
-            // FPS overlay — draw directly, push its own small region
-            draw_fps(&mut rgba, W, fps_display);
-            lcd.push_region(&rgba, W, W - 50, 0, 50, 10);
-        }
-    }
-}
-
 
 fn draw_fps(fb: &mut [u8], fb_w: u16, fps: u32) {
     let mut num = [0u8; 8];
@@ -334,5 +265,170 @@ fn draw_fps(fb: &mut [u8], fb_w: u16, fps: u32) {
         }
     }
 }
+
+// === Main ===
+#[esp_hal::main]
+fn main() -> ! {
+    esp_alloc::heap_allocator!(size: 200 * 1024);
+    let peripherals = esp_hal::init(esp_hal::Config::default());
+    let spi = Spi::new(peripherals.SPI2, SpiConfig::default().with_frequency(Rate::from_mhz(26)).with_mode(SpiMode::_0)).unwrap().with_sck(peripherals.GPIO5).with_mosi(peripherals.GPIO4);
+    let cs = Output::new(peripherals.GPIO6, Level::High, OutputConfig::default());
+    let dc = Output::new(peripherals.GPIO7, Level::Low, OutputConfig::default());
+    let mut rst = Output::new(peripherals.GPIO3, Level::High, OutputConfig::default());
+    let mut bl = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());
+    let mut lcd = St7735 { spi, dc, cs };
+    lcd.init(&mut rst);
+    bl.set_high();
+
+    // === ECS Setup ===
+    let mut world = World::new();
+
+    // Root entity (id=0) also holds FrameCounter
+    let root = WidgetBuilder::new(&mut world)
+        .bg_color(Color::rgb(30, 30, 46))
+        .layout(LayoutStyle { direction: FlexDirection::Column, width: Some(W), height: Some(H), ..Default::default() })
+        .id();
+    world.insert(root, FrameCounter(0));
+
+    // Static UI
+    let header = WidgetBuilder::new(&mut world)
+        .bg_color(Color::rgb(88, 166, 255)).text("mirui").border_radius(3)
+        .layout(LayoutStyle { height: Some(20), ..Default::default() })
+        .id();
+    let left = WidgetBuilder::new(&mut world)
+        .bg_color(Color::rgb(63, 185, 80))
+        .layout(LayoutStyle { grow: 1.0, ..Default::default() })
+        .id();
+    let right = WidgetBuilder::new(&mut world)
+        .bg_color(Color::rgb(248, 81, 73))
+        .layout(LayoutStyle { grow: 1.0, ..Default::default() })
+        .id();
+    let row = WidgetBuilder::new(&mut world)
+        .layout(LayoutStyle { direction: FlexDirection::Row, grow: 1.0, ..Default::default() })
+        .child(left).child(right)
+        .id();
+    let footer = WidgetBuilder::new(&mut world)
+        .bg_color(Color::rgb(210, 168, 255)).text("3-body")
+        .layout(LayoutStyle { height: Some(20), ..Default::default() })
+        .id();
+
+    // 3 image entities with physics (ids will be 10, 11, 12 — but we can't guarantee that)
+    // Instead, store entity ids and use them in systems via a resource component
+    let iw = IMG_THUMBS_UP_WIDTH;
+    let ih = IMG_THUMBS_UP_HEIGHT;
+    let cx = (W as i32 / 2) * 256;
+    let cy = (H as i32 / 2) * 256;
+    let r = 30 * 256;
+
+    let init_pos = [
+        (cx, cy - r, 350i32, 0i32),
+        (cx - r * 7 / 8, cy + r / 2, -175, 300),
+        (cx + r * 7 / 8, cy + r / 2, -175, -300),
+    ];
+
+    let mut img_entities: [Entity; 3] = [Entity { id: 0, generation: 0 }; 3];
+    for i in 0..3 {
+        let e = WidgetBuilder::new(&mut world)
+            .layout(LayoutStyle {
+                position: Position::Absolute,
+                left: Some(init_pos[i].0 / 256 - iw as i32 / 2),
+                top: Some(init_pos[i].1 / 256 - ih as i32 / 2),
+                width: Some(iw), height: Some(ih),
+                ..Default::default()
+            })
+            .id();
+        world.insert(e, Image::new(Vec::from(IMG_THUMBS_UP), iw, ih));
+        world.insert(e, PhysicsBody { x: init_pos[i].0, y: init_pos[i].1 });
+        world.insert(e, Velocity { vx: init_pos[i].2, vy: init_pos[i].3 });
+        img_entities[i] = e;
+    }
+
+    // Build tree
+    use mirui::widget::{Children, Parent};
+    world.insert(root, BodyEntities(img_entities));
+    for &child in &[header, row, footer, img_entities[0], img_entities[1], img_entities[2]] {
+        world.insert(child, Parent(root));
+        if let Some(children) = world.get_mut::<Children>(root) {
+            children.0.push(child);
+        }
+    }
+
+    // Initial full render
+    let mut rgba = vec![0u8; W as usize * H as usize * 4];
+    {
+        let mut renderer = SwRenderer::new(&mut rgba, W as u32, H as u32);
+        render_system::render(&world, root, W, H, 1, &mut renderer);
+    }
+    lcd.push_pixels(&{
+        let mut buf = vec![0u8; W as usize * H as usize * 2];
+        for i in 0..(W as usize * H as usize) {
+            let r = rgba[i*4] as u16; let g = rgba[i*4+1] as u16; let b = rgba[i*4+2] as u16;
+            let px = ((r>>3)<<11)|((g>>2)<<5)|(b>>3);
+            buf[i*2] = (px>>8) as u8; buf[i*2+1] = px as u8;
+        }
+        buf
+    });
+
+    // === Main Loop (manual, since no App on bare metal) ===
+    let mut fps_display: u32 = 0;
+    let mut fps_count: u32 = 0;
+    let mut last_time = systimer_now();
+
+    loop {
+        fps_count += 1;
+        let now = systimer_now();
+        if now.wrapping_sub(last_time) >= 160_000_000 {
+            fps_display = fps_count;
+            fps_count = 0;
+            last_time = now;
+        }
+
+        // Run systems
+        for _ in 0..4 { three_body_system(&mut world); }
+        kick_system(&mut world);
+        sync_layout_system(&mut world); // marks old positions dirty
+
+        // Collect old dirty rects
+        let dirty_old = render_system::collect_dirty_region(&mut world, root, W, H, 1);
+
+        sync_layout_apply_system(&mut world); // updates positions, marks new dirty
+
+        // Collect new dirty rects
+        let dirty_new = render_system::collect_dirty_region(&mut world, root, W, H, 1);
+
+        frame_counter_system(&mut world);
+
+        // Merge old + new
+        let dirty = match (dirty_old, dirty_new) {
+            (Some(a), Some(b)) => {
+                let x0 = a.x.min(b.x);
+                let y0 = a.y.min(b.y);
+                let x1 = (a.x + a.w as i32).max(b.x + b.w as i32);
+                let y1 = (a.y + a.h as i32).max(b.y + b.h as i32);
+                Some(mirui::types::Rect { x: x0, y: y0, w: (x1 - x0) as u16, h: (y1 - y0) as u16 })
+            }
+            (Some(r), None) | (None, Some(r)) => Some(r),
+            (None, None) => None,
+        };
+
+        if let Some(dr) = dirty {
+            let dx = (dr.x.max(0) as u16).min(W - 1);
+            let dy = (dr.y.max(0) as u16).min(H - 1);
+            let dw = dr.w.min(W - dx);
+            let dh = dr.h.min(H - dy);
+            if dw > 0 && dh > 0 {
+                let clip = mirui::types::Rect { x: dx as i32, y: dy as i32, w: dw, h: dh };
+                let mut renderer = SwRenderer::new(&mut rgba, W as u32, H as u32);
+                render_system::render_region(&world, root, W, H, 1, &clip, &mut renderer);
+                lcd.push_region(&rgba, W, dx, dy, dw, dh);
+            }
+        }
+
+        // FPS overlay
+        draw_fps(&mut rgba, W, fps_display);
+        lcd.push_region(&rgba, W, W - 50, 0, 50, 10);
+    }
+}
+
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! { loop {} }
