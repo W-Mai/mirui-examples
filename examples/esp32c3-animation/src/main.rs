@@ -18,7 +18,6 @@ use mirui::ecs::{Entity, World};
 use mirui::layout::*;
 use mirui::types::Color;
 use mirui::widget::builder::WidgetBuilder;
-use mirui::widget::dirty::Dirty;
 use mirui::widget::render_system;
 use mirui::widget::Style;
 
@@ -127,36 +126,7 @@ fn sync_layout_system(world: &mut World) {
         let (bx, by) = world.get::<PhysicsBody>(e)
             .map(|b| (b.x / 256 - iw / 2, b.y / 256 - ih / 2))
             .unwrap_or((0, 0));
-        let changed = world.get::<Style>(e)
-            .map(|s| s.layout.left != Some(bx) || s.layout.top != Some(by))
-            .unwrap_or(false);
-        if changed {
-            // Mark dirty at OLD position first
-            world.insert(e, Dirty);
-        }
-    }
-}
-
-fn sync_layout_apply_system(world: &mut World) {
-    let iw = IMG_THUMBS_UP_WIDTH as i32;
-    let ih = IMG_THUMBS_UP_HEIGHT as i32;
-    let entities = match world.resource::<BodyEntities>() {
-        Some(b) => b.0,
-        None => return,
-    };
-    for i in 0..3 {
-        let e = entities[i];
-        let (bx, by) = world.get::<PhysicsBody>(e)
-            .map(|b| (b.x / 256 - iw / 2, b.y / 256 - ih / 2))
-            .unwrap_or((0, 0));
-        if let Some(style) = world.get_mut::<Style>(e) {
-            if style.layout.left != Some(bx) || style.layout.top != Some(by) {
-                style.layout.left = Some(bx);
-                style.layout.top = Some(by);
-                // Mark dirty at NEW position
-                world.insert(e, Dirty);
-            }
-        }
+        mirui::widget::set_position(world, e, bx, by);
     }
 }
 
@@ -389,25 +359,10 @@ fn main() -> ! {
 
         // Run systems via scheduler
         scheduler.run_all(&mut world);
-
-        // Dirty rect: collect old, apply new positions, collect new
         sync_layout_system(&mut world);
-        let dirty_old = render_system::collect_dirty_region(&mut world, root, W, H, 1);
-        sync_layout_apply_system(&mut world);
-        let dirty_new = render_system::collect_dirty_region(&mut world, root, W, H, 1);
 
-        // Merge old + new
-        let dirty = match (dirty_old, dirty_new) {
-            (Some(a), Some(b)) => {
-                let x0 = a.x.min(b.x);
-                let y0 = a.y.min(b.y);
-                let x1 = (a.x + a.w as i32).max(b.x + b.w as i32);
-                let y1 = (a.y + a.h as i32).max(b.y + b.h as i32);
-                Some(mirui::types::Rect { x: x0, y: y0, w: (x1 - x0) as u16, h: (y1 - y0) as u16 })
-            }
-            (Some(r), None) | (None, Some(r)) => Some(r),
-            (None, None) => None,
-        };
+        // Single collect — PrevRect handles old+new automatically
+        let dirty = render_system::collect_dirty_region(&mut world, root, W, H, 1);
 
         if let Some(dr) = dirty {
             let dx = (dr.x.max(0) as u16).min(W - 1);
