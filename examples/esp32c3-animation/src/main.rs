@@ -37,6 +37,8 @@ struct BodyEntities([Entity; 3]);
 fn three_body_system(world: &mut World) {
     const EQUILIBRIUM: i32 = 30;
 
+    for _ in 0..4 {
+
     let root = Entity { id: 0, generation: 0 };
     let entities = match world.get::<BodyEntities>(root) {
         Some(b) => b.0,
@@ -94,6 +96,7 @@ fn three_body_system(world: &mut World) {
             }
         }
     }
+    } // end for _ in 0..4
 }
 
 fn kick_system(world: &mut World) {
@@ -370,6 +373,12 @@ fn main() -> ! {
     });
 
     // === Main Loop (manual, since no App on bare metal) ===
+    // System scheduler
+    let mut scheduler = mirui::ecs::SystemScheduler::new();
+    scheduler.add(three_body_system);
+    scheduler.add(kick_system);
+    scheduler.add(frame_counter_system);
+
     let mut fps_display: u32 = 0;
     let mut fps_count: u32 = 0;
     let mut last_time = systimer_now();
@@ -383,20 +392,14 @@ fn main() -> ! {
             last_time = now;
         }
 
-        // Run systems
-        for _ in 0..4 { three_body_system(&mut world); }
-        kick_system(&mut world);
-        sync_layout_system(&mut world); // marks old positions dirty
+        // Run systems via scheduler
+        scheduler.run_all(&mut world);
 
-        // Collect old dirty rects
+        // Dirty rect: collect old, apply new positions, collect new
+        sync_layout_system(&mut world);
         let dirty_old = render_system::collect_dirty_region(&mut world, root, W, H, 1);
-
-        sync_layout_apply_system(&mut world); // updates positions, marks new dirty
-
-        // Collect new dirty rects
+        sync_layout_apply_system(&mut world);
         let dirty_new = render_system::collect_dirty_region(&mut world, root, W, H, 1);
-
-        frame_counter_system(&mut world);
 
         // Merge old + new
         let dirty = match (dirty_old, dirty_new) {
