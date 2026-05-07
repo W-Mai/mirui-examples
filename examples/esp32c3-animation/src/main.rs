@@ -39,8 +39,7 @@ fn three_body_system(world: &mut World) {
 
     for _ in 0..4 {
 
-    let root = Entity { id: 0, generation: 0 };
-    let entities = match world.get::<BodyEntities>(root) {
+    let entities = match world.resource::<BodyEntities>() {
         Some(b) => b.0,
         None => return,
     };
@@ -100,9 +99,8 @@ fn three_body_system(world: &mut World) {
 }
 
 fn kick_system(world: &mut World) {
-    let root = Entity { id: 0, generation: 0 };
-    let fc = world.get::<FrameCounter>(root).map(|f| f.0).unwrap_or(0);
-    let entities = match world.get::<BodyEntities>(root) {
+    let fc = world.resource::<FrameCounter>().map(|f| f.0).unwrap_or(0);
+    let entities = match world.resource::<BodyEntities>() {
         Some(b) => b.0,
         None => return,
     };
@@ -120,8 +118,7 @@ fn kick_system(world: &mut World) {
 fn sync_layout_system(world: &mut World) {
     let iw = IMG_THUMBS_UP_WIDTH as i32;
     let ih = IMG_THUMBS_UP_HEIGHT as i32;
-    let root = Entity { id: 0, generation: 0 };
-    let entities = match world.get::<BodyEntities>(root) {
+    let entities = match world.resource::<BodyEntities>() {
         Some(b) => b.0,
         None => return,
     };
@@ -143,8 +140,7 @@ fn sync_layout_system(world: &mut World) {
 fn sync_layout_apply_system(world: &mut World) {
     let iw = IMG_THUMBS_UP_WIDTH as i32;
     let ih = IMG_THUMBS_UP_HEIGHT as i32;
-    let root = Entity { id: 0, generation: 0 };
-    let entities = match world.get::<BodyEntities>(root) {
+    let entities = match world.resource::<BodyEntities>() {
         Some(b) => b.0,
         None => return,
     };
@@ -165,8 +161,7 @@ fn sync_layout_apply_system(world: &mut World) {
 }
 
 fn frame_counter_system(world: &mut World) {
-    let e = Entity { id: 0, generation: 0 };
-    if let Some(fc) = world.get_mut::<FrameCounter>(e) {
+    if let Some(fc) = world.resource_mut::<FrameCounter>() {
         fc.0 = fc.0.wrapping_add(1);
     }
 }
@@ -291,7 +286,7 @@ fn main() -> ! {
         .bg_color(Color::rgb(30, 30, 46))
         .layout(LayoutStyle { direction: FlexDirection::Column, width: Some(W), height: Some(H), ..Default::default() })
         .id();
-    world.insert(root, FrameCounter(0));
+    world.insert_resource(FrameCounter(0));
 
     // Static UI
     let header = WidgetBuilder::new(&mut world)
@@ -348,7 +343,7 @@ fn main() -> ! {
 
     // Build tree
     use mirui::widget::{Children, Parent};
-    world.insert(root, BodyEntities(img_entities));
+    world.insert_resource(BodyEntities(img_entities));
     for &child in &[header, row, footer, img_entities[0], img_entities[1], img_entities[2]] {
         world.insert(child, Parent(root));
         if let Some(children) = world.get_mut::<Children>(root) {
