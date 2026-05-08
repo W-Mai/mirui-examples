@@ -322,28 +322,27 @@ fn main() -> ! {
         (cx + r * 7 / 8, cy + r / 2, -175, -300),
     ];
 
-    let mut img_entities = [Entity { id: 0, generation: 0 }; 3];
-    for i in 0..3 {
-        let e = WidgetBuilder::new(world)
-            .layout(LayoutStyle {
-                position: Position::Absolute,
-                left: Some(init_pos[i].0 / 256 - iw as i32 / 2),
-                top: Some(init_pos[i].1 / 256 - ih as i32 / 2),
-                width: Some(iw), height: Some(ih),
-                ..Default::default()
-            })
-            .id();
-        world.insert(e, Image::new(Vec::from(IMG_THUMBS_UP), iw, ih));
-        world.insert(e, PhysicsBody { x: init_pos[i].0, y: init_pos[i].1 });
-        world.insert(e, Velocity { vx: init_pos[i].2, vy: init_pos[i].3 });
-        img_entities[i] = e;
+    // Create physics bodies via DSL with enchants
+    mirui_macros::ui! {
+        :(
+            parent: root
+            world: world
+        :)
 
-        use mirui::widget::{Children, Parent};
-        world.insert(e, Parent(root));
-        if let Some(children) = world.get_mut::<Children>(root) {
-            children.0.push(e);
+        walk init_pos.iter() with pos {
+            body (
+                position: Position::Absolute,
+                left: pos.0 / 256 - iw as i32 / 2,
+                top: pos.1 / 256 - ih as i32 / 2,
+                width: iw,
+                height: ih,
+                image: Image::new(Vec::from(IMG_THUMBS_UP), iw, ih)
+            ) [
+                PhysicsBody { x: pos.0, y: pos.1 },
+                Velocity { vx: pos.2, vy: pos.3 }
+            ] {}
         }
-    }
+    };
 
     world.insert_resource(FpsState { count: 0, last_tick: systimer_now(), display: 0 });
     world.insert_resource(PhysicsTime { last_tick: systimer_now(), accumulator: 0 });
