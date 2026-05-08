@@ -301,7 +301,12 @@ fn main() -> ! {
         :)
 
         content (direction: FlexDirection::Column, grow: 1.0) {
-            header (bg_color: Color::rgb(88, 166, 255), height: 20, text: "mirui", border_radius: 3) {}
+            header (
+                bg_color: Color::rgb(88, 166, 255),
+                height: 20,
+                text: "mirui",
+                border_radius: 3
+            ) {}
             row (direction: FlexDirection::Row, grow: 1.0) {
                 left (bg_color: Color::rgb(63, 185, 80), grow: 1.0) {}
                 right (bg_color: Color::rgb(248, 81, 73), grow: 1.0) {}
@@ -339,7 +344,7 @@ fn main() -> ! {
                 image: Image::new(Vec::from(IMG_THUMBS_UP), iw, ih)
             ) [
                 PhysicsBody { x: pos.0, y: pos.1 },
-                Velocity { vx: pos.2, vy: pos.3 }
+                Velocity { vx: pos.2, vy: pos.3 },
             ] {}
         }
     };
