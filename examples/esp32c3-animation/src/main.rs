@@ -177,9 +177,9 @@ impl<'a> St7735<'a> {
     fn init(&mut self, rst: &mut Output) {
         rst.set_low(); delay_ms(10); rst.set_high(); delay_ms(120);
         self.cmd(0x01); delay_ms(150); self.cmd(0x11); delay_ms(500);
-        self.cmd(0xB1); self.data(&[0x01,0x2C,0x2D]);
-        self.cmd(0xB2); self.data(&[0x01,0x2C,0x2D]);
-        self.cmd(0xB3); self.data(&[0x01,0x2C,0x2D,0x01,0x2C,0x2D]);
+        self.cmd(0xB1); self.data(&[0x01,0x01,0x01]);
+        self.cmd(0xB2); self.data(&[0x01,0x01,0x01]);
+        self.cmd(0xB3); self.data(&[0x01,0x01,0x01,0x01,0x01,0x01]);
         self.cmd(0xB4); self.data(&[0x07]);
         self.cmd(0xC0); self.data(&[0xA2,0x02,0x84]);
         self.cmd(0xC1); self.data(&[0xC5]);
@@ -198,20 +198,28 @@ impl<'a> St7735<'a> {
         self.cmd(0x2C);
     }
     fn push_region(&mut self, rgba: &[u8], fb_w: u16, x: u16, y: u16, w: u16, h: u16) {
+        const BATCH_ROWS: usize = 16;
         self.set_window(x, y, x + w - 1, y + h - 1);
         self.cs.set_low(); self.dc.set_high();
-        let mut row_buf = vec![0u8; w as usize * 2];
-        for row in 0..h as usize {
-            for col in 0..w as usize {
-                let i = ((y as usize + row) * fb_w as usize + x as usize + col) * 4;
-                let r = rgba[i] as u16;
-                let g = rgba[i+1] as u16;
-                let b = rgba[i+2] as u16;
-                let px = ((r>>3)<<11)|((g>>2)<<5)|(b>>3);
-                row_buf[col*2] = (px>>8) as u8;
-                row_buf[col*2+1] = px as u8;
+        let mut buf = vec![0u8; w as usize * 2 * BATCH_ROWS];
+        let mut row = 0usize;
+        while row < h as usize {
+            let rows_this_batch = BATCH_ROWS.min(h as usize - row);
+            let buf_len = w as usize * 2 * rows_this_batch;
+            for r in 0..rows_this_batch {
+                for col in 0..w as usize {
+                    let i = ((y as usize + row + r) * fb_w as usize + x as usize + col) * 4;
+                    let rv = rgba[i] as u16;
+                    let gv = rgba[i+1] as u16;
+                    let bv = rgba[i+2] as u16;
+                    let px = ((rv>>3)<<11)|((gv>>2)<<5)|(bv>>3);
+                    let off = (r * w as usize + col) * 2;
+                    buf[off] = (px>>8) as u8;
+                    buf[off+1] = px as u8;
+                }
             }
-            self.spi.write(&row_buf).ok();
+            self.spi.write(&buf[..buf_len]).ok();
+            row += rows_this_batch;
         }
         self.cs.set_high();
     }
