@@ -3,6 +3,11 @@ name = "mirui-esp32c3"
 version = "0.0.1"
 edition = "2024"
 
+[features]
+default = ["demo-threebody"]
+demo-threebody = []
+demo-subpixel = []
+
 [package.metadata.esp-hal]
 
 [dependencies]
