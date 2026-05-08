@@ -29,7 +29,6 @@ const H: u16 = 128;
 struct Velocity { vx: i32, vy: i32 }
 struct PhysicsBody { x: i32, y: i32 }
 struct FrameCounter(u32);
-struct BodyEntities([Entity; 3]);
 struct FpsState { count: u32, last_tick: u32, display: u32 }
 struct PhysicsTime { last_tick: u32, accumulator: u32 }
 const PHYSICS_DT: u32 = 1_111_111; // 160MHz / 144 = ~1.11M ticks = 6.94ms fixed step (144Hz)
@@ -53,10 +52,9 @@ fn physics_tick_system(world: &mut World) {
 
 fn three_body_step(world: &mut World) {
     const EQUILIBRIUM: i32 = 30;
-    let entities = match world.resource::<BodyEntities>() {
-        Some(b) => b.0,
-        None => return,
-    };
+    let mut buf = Vec::new();
+    world.query::<PhysicsBody>().and::<Velocity>().collect_into(&mut buf);
+    let entities = buf;
     let mut positions = [(0i32, 0i32); 3];
     for i in 0..3 {
         if let Some(body) = world.get::<PhysicsBody>(entities[i]) {
@@ -108,12 +106,11 @@ fn three_body_step(world: &mut World) {
 
 fn kick_system(world: &mut World) {
     let fc = world.resource::<FrameCounter>().map(|f| f.0).unwrap_or(0);
-    let entities = match world.resource::<BodyEntities>() {
-        Some(b) => b.0,
-        None => return,
-    };
-    if fc % 40 == 0 {
-        let kick_idx = (fc / 40) as usize % 3;
+    let mut buf = Vec::new();
+    world.query::<Velocity>().collect_into(&mut buf);
+    let entities = buf;
+    if fc % 40 == 0 && !entities.is_empty() {
+        let kick_idx = (fc / 40) as usize % entities.len();
         let kick_dir = (fc / 120) as i32;
         let e = entities[kick_idx];
         if let Some(vel) = world.get_mut::<Velocity>(e) {
@@ -126,12 +123,9 @@ fn kick_system(world: &mut World) {
 fn sync_layout_system(world: &mut World) {
     let iw = IMG_THUMBS_UP_WIDTH as i32;
     let ih = IMG_THUMBS_UP_HEIGHT as i32;
-    let entities = match world.resource::<BodyEntities>() {
-        Some(b) => b.0,
-        None => return,
-    };
-    for i in 0..3 {
-        let e = entities[i];
+    let mut buf = Vec::new();
+    world.query::<PhysicsBody>().collect_into(&mut buf);
+    for e in buf {
         let (bx, by) = world.get::<PhysicsBody>(e)
             .map(|b| (b.x / 256 - iw / 2, b.y / 256 - ih / 2))
             .unwrap_or((0, 0));
@@ -294,27 +288,29 @@ fn main() -> ! {
     let world = &mut app.world;
     world.insert_resource(FrameCounter(0));
 
-    let header = WidgetBuilder::new(world)
-        .bg_color(Color::rgb(88, 166, 255)).text("mirui").border_radius(3)
-        .layout(LayoutStyle { height: Some(20), ..Default::default() })
-        .id();
-    let left = WidgetBuilder::new(world)
-        .bg_color(Color::rgb(63, 185, 80))
-        .layout(LayoutStyle { grow: 1.0, ..Default::default() })
-        .id();
-    let right = WidgetBuilder::new(world)
-        .bg_color(Color::rgb(248, 81, 73))
-        .layout(LayoutStyle { grow: 1.0, ..Default::default() })
-        .id();
-    let row = WidgetBuilder::new(world)
-        .layout(LayoutStyle { direction: FlexDirection::Row, grow: 1.0, ..Default::default() })
-        .child(left).child(right)
-        .id();
-    let footer = WidgetBuilder::new(world)
-        .bg_color(Color::rgb(210, 168, 255)).text("3-body")
-        .layout(LayoutStyle { height: Some(20), ..Default::default() })
+    // Static UI via DSL
+    let root = WidgetBuilder::new(world)
+        .bg_color(Color::rgb(30, 30, 46))
+        .layout(LayoutStyle { direction: FlexDirection::Column, width: Some(W), height: Some(H), ..Default::default() })
         .id();
 
+    mirui_macros::ui! {
+        :(
+            parent: root
+            world: world
+        :)
+
+        content (direction: FlexDirection::Column, grow: 1.0) {
+            header (bg_color: Color::rgb(88, 166, 255), height: 20, text: "mirui", border_radius: 3) {}
+            row (direction: FlexDirection::Row, grow: 1.0) {
+                left (bg_color: Color::rgb(63, 185, 80), grow: 1.0) {}
+                right (bg_color: Color::rgb(248, 81, 73), grow: 1.0) {}
+            }
+            footer (bg_color: Color::rgb(210, 168, 255), height: 20, text: "3-body") {}
+        }
+    };
+
+    // Dynamic image entities with physics
     let iw = IMG_THUMBS_UP_WIDTH;
     let ih = IMG_THUMBS_UP_HEIGHT;
     let cx = (W as i32 / 2) * 256;
@@ -341,16 +337,14 @@ fn main() -> ! {
         world.insert(e, PhysicsBody { x: init_pos[i].0, y: init_pos[i].1 });
         world.insert(e, Velocity { vx: init_pos[i].2, vy: init_pos[i].3 });
         img_entities[i] = e;
+
+        use mirui::widget::{Children, Parent};
+        world.insert(e, Parent(root));
+        if let Some(children) = world.get_mut::<Children>(root) {
+            children.0.push(e);
+        }
     }
 
-    let root = WidgetBuilder::new(world)
-        .bg_color(Color::rgb(30, 30, 46))
-        .layout(LayoutStyle { direction: FlexDirection::Column, width: Some(W), height: Some(H), ..Default::default() })
-        .child(header).child(row).child(footer)
-        .child(img_entities[0]).child(img_entities[1]).child(img_entities[2])
-        .id();
-
-    world.insert_resource(BodyEntities(img_entities));
     world.insert_resource(FpsState { count: 0, last_tick: systimer_now(), display: 0 });
     world.insert_resource(PhysicsTime { last_tick: systimer_now(), accumulator: 0 });
 
