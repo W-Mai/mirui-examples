@@ -15,7 +15,7 @@ use mirui::app::App;
 use mirui::backend::framebuf::FramebufBackend;
 use mirui::components::assets::*;
 use mirui::components::image::Image;
-use mirui::ecs::{Entity, World};
+use mirui::ecs::World;
 use mirui::layout::*;
 use mirui::types::{Color, Dimension, Fixed, Rect};
 use mirui::widget::builder::WidgetBuilder;
@@ -277,10 +277,10 @@ fn main() -> ! {
 
     // Backend: flush callback pushes dirty region to LCD + FPS overlay
     let backend = FramebufBackend::new(W, H, move |buf: &[u8], area: &Rect| {
-        let x = area.x.max(0) as u16;
-        let y = area.y.max(0) as u16;
-        let w = area.w.min(W - x);
-        let h = area.h.min(H - y);
+        let x = area.x.to_int().max(0) as u16;
+        let y = area.y.to_int().max(0) as u16;
+        let w = (area.w.to_int() as u16).min(W - x);
+        let h = (area.h.to_int() as u16).min(H - y);
         if w > 0 && h > 0 {
             lcd.push_region(buf, W, x, y, w, h);
         }
