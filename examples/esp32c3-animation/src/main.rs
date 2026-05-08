@@ -17,7 +17,7 @@ use mirui::components::assets::*;
 use mirui::components::image::Image;
 use mirui::ecs::{Entity, World};
 use mirui::layout::*;
-use mirui::types::{Color, Rect};
+use mirui::types::{Color, Dimension, Fixed, Rect};
 use mirui::widget::builder::WidgetBuilder;
 
 esp_bootloader_esp_idf::esp_app_desc!();
@@ -26,8 +26,8 @@ const W: u16 = 128;
 const H: u16 = 128;
 
 // === Components ===
-struct Velocity { vx: i32, vy: i32 }
-struct PhysicsBody { x: i32, y: i32 }
+struct Velocity { vx: Fixed, vy: Fixed }
+struct PhysicsBody { x: Fixed, y: Fixed }
 struct FrameCounter(u32);
 struct FpsState { count: u32, last_tick: u32, display: u32 }
 struct PhysicsTime { last_tick: u32, accumulator: u32 }
@@ -51,44 +51,50 @@ fn physics_tick_system(world: &mut World) {
 }
 
 fn three_body_step(world: &mut World) {
-    const EQUILIBRIUM: i32 = 30;
+    const EQUILIBRIUM: Fixed = Fixed::from_int(30);
     let mut buf = Vec::new();
     world.query::<PhysicsBody>().and::<Velocity>().collect_into(&mut buf);
     let entities = buf;
-    let mut positions = [(0i32, 0i32); 3];
+    let mut positions = [(Fixed::ZERO, Fixed::ZERO); 3];
     for i in 0..3 {
         if let Some(body) = world.get::<PhysicsBody>(entities[i]) {
             positions[i] = (body.x, body.y);
         }
     }
-    let mut ax = [0i32; 3];
-    let mut ay = [0i32; 3];
+    let mut ax = [Fixed::ZERO; 3];
+    let mut ay = [Fixed::ZERO; 3];
     for i in 0..3 {
         for j in (i+1)..3 {
             let dx = positions[j].0 - positions[i].0;
             let dy = positions[j].1 - positions[i].1;
-            let dist = isqrt(((dx/256)*(dx/256) + (dy/256)*(dy/256)) as u32) as i32;
-            if dist == 0 { continue; }
-            let force = 120 * (dist - EQUILIBRIUM) / dist.max(1);
-            let fx = (force * (dx / 256)) / dist;
-            let fy = (force * (dy / 256)) / dist;
+            let dx_int = dx.to_int();
+            let dy_int = dy.to_int();
+            let dist = Fixed::from_int(isqrt((dx_int * dx_int + dy_int * dy_int) as u32) as i32);
+            if dist == Fixed::ZERO { continue; }
+            let force = Fixed::from_int(120) * (dist - EQUILIBRIUM) / dist;
+            let fx = force * dx / (dist * dist);
+            let fy = force * dy / (dist * dist);
             ax[i] += fx; ay[i] += fy;
             ax[j] -= fx; ay[j] -= fy;
         }
     }
+    let clamp_max = Fixed::from_raw(1200);
+    let clamp_min = Fixed::from_raw(-1200);
     for i in 0..3 {
         let e = entities[i];
         if let Some(vel) = world.get_mut::<Velocity>(e) {
             vel.vx += ax[i]; vel.vy += ay[i];
-            vel.vx = vel.vx.clamp(-1200, 1200);
-            vel.vy = vel.vy.clamp(-1200, 1200);
+            if vel.vx.raw() > clamp_max.raw() { vel.vx = clamp_max; }
+            if vel.vx.raw() < clamp_min.raw() { vel.vx = clamp_min; }
+            if vel.vy.raw() > clamp_max.raw() { vel.vy = clamp_max; }
+            if vel.vy.raw() < clamp_min.raw() { vel.vy = clamp_min; }
         }
-        let (vx, vy) = world.get::<Velocity>(e).map(|v| (v.vx, v.vy)).unwrap_or((0,0));
+        let (vx, vy) = world.get::<Velocity>(e).map(|v| (v.vx, v.vy)).unwrap_or((Fixed::ZERO, Fixed::ZERO));
         if let Some(body) = world.get_mut::<PhysicsBody>(e) {
             body.x += vx; body.y += vy;
-            let min = 8 * 256;
-            let max_x = (W as i32 - 8) * 256;
-            let max_y = (H as i32 - 8) * 256;
+            let min = Fixed::from_int(8);
+            let max_x = Fixed::from_int(W as i32 - 8);
+            let max_y = Fixed::from_int(H as i32 - 8);
             if body.x < min { body.x = min; }
             if body.x > max_x { body.x = max_x; }
             if body.y < min { body.y = min; }
@@ -97,8 +103,8 @@ fn three_body_step(world: &mut World) {
         if let Some(body) = world.get::<PhysicsBody>(e) {
             let bx = body.x; let by = body.y;
             if let Some(vel) = world.get_mut::<Velocity>(e) {
-                if bx <= 8*256 || bx >= (W as i32-8)*256 { vel.vx = -vel.vx; }
-                if by <= 8*256 || by >= (H as i32-8)*256 { vel.vy = -vel.vy; }
+                if bx <= Fixed::from_int(8) || bx >= Fixed::from_int(W as i32 - 8) { vel.vx = Fixed::ZERO - vel.vx; }
+                if by <= Fixed::from_int(8) || by >= Fixed::from_int(H as i32 - 8) { vel.vy = Fixed::ZERO - vel.vy; }
             }
         }
     }
@@ -114,8 +120,8 @@ fn kick_system(world: &mut World) {
         let kick_dir = (fc / 120) as i32;
         let e = entities[kick_idx];
         if let Some(vel) = world.get_mut::<Velocity>(e) {
-            vel.vx += ((kick_dir * 7) % 13 - 6) * 160;
-            vel.vy += ((kick_dir * 11) % 13 - 6) * 160;
+            vel.vx += Fixed::from_raw(((kick_dir * 7) % 13 - 6) * 160);
+            vel.vy += Fixed::from_raw(((kick_dir * 11) % 13 - 6) * 160);
         }
     }
 }
@@ -127,7 +133,7 @@ fn sync_layout_system(world: &mut World) {
     world.query::<PhysicsBody>().collect_into(&mut buf);
     for e in buf {
         let (bx, by) = world.get::<PhysicsBody>(e)
-            .map(|b| (b.x / 256 - iw / 2, b.y / 256 - ih / 2))
+            .map(|b| (b.x.to_int() - iw / 2, b.y.to_int() - ih / 2))
             .unwrap_or((0, 0));
         mirui::widget::set_position(world, e, bx, by);
     }
@@ -291,7 +297,7 @@ fn main() -> ! {
     // Static UI via DSL
     let root = WidgetBuilder::new(world)
         .bg_color(Color::rgb(30, 30, 46))
-        .layout(LayoutStyle { direction: FlexDirection::Column, width: Some(W), height: Some(H), ..Default::default() })
+        .layout(LayoutStyle { direction: FlexDirection::Column, width: Dimension::px(W as i32), height: Dimension::px(H as i32), ..Default::default() })
         .id();
 
     mirui_macros::ui! {
@@ -318,13 +324,14 @@ fn main() -> ! {
     // Dynamic image entities with physics
     let iw = IMG_THUMBS_UP_WIDTH;
     let ih = IMG_THUMBS_UP_HEIGHT;
-    let cx = (W as i32 / 2) * 256;
-    let cy = (H as i32 / 2) * 256;
-    let r = 30 * 256;
+    let cx = Fixed::from_int(W as i32 / 2);
+    let cy = Fixed::from_int(H as i32 / 2);
+    let r = Fixed::from_int(30);
+    let r78 = r * 7 / 8; // r * 7/8
     let init_pos = [
-        (cx, cy - r, 350i32, 0i32),
-        (cx - r * 7 / 8, cy + r / 2, -175, 300),
-        (cx + r * 7 / 8, cy + r / 2, -175, -300),
+        (cx, cy - r, Fixed::from_raw(350), Fixed::ZERO),
+        (cx - r78, cy + r / 2, Fixed::from_raw(-175), Fixed::from_raw(300)),
+        (cx + r78, cy + r / 2, Fixed::from_raw(-175), Fixed::from_raw(-300)),
     ];
 
     // Create physics bodies via DSL with enchants
@@ -337,8 +344,8 @@ fn main() -> ! {
         walk init_pos.iter() with pos {
             body (
                 position: Position::Absolute,
-                left: pos.0 / 256 - iw as i32 / 2,
-                top: pos.1 / 256 - ih as i32 / 2,
+                left: pos.0.to_int() - iw as i32 / 2,
+                top: pos.1.to_int() - ih as i32 / 2,
                 width: iw,
                 height: ih,
                 image: Image::new(Vec::from(IMG_THUMBS_UP), iw, ih)
