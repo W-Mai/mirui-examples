@@ -116,14 +116,14 @@ fn kick_system(world: &mut World) {
 }
 
 fn sync_layout_system(world: &mut World) {
-    let iw = IMG_THUMBS_UP_WIDTH as i32;
-    let ih = IMG_THUMBS_UP_HEIGHT as i32;
+    let half_w = Fixed::from_int(IMG_THUMBS_UP_WIDTH as i32 / 2);
+    let half_h = Fixed::from_int(IMG_THUMBS_UP_HEIGHT as i32 / 2);
     let mut buf = Vec::new();
     world.query::<PhysicsBody>().collect_into(&mut buf);
     for e in buf {
         let (bx, by) = world.get::<PhysicsBody>(e)
-            .map(|b| (b.x.to_int() - iw / 2, b.y.to_int() - ih / 2))
-            .unwrap_or((0, 0));
+            .map(|b| (b.x - half_w, b.y - half_h))
+            .unwrap_or((Fixed::ZERO, Fixed::ZERO));
         mirui::widget::set_position(world, e, bx, by);
     }
 }
