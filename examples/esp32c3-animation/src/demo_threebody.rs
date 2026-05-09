@@ -116,8 +116,8 @@ fn kick_system(world: &mut World) {
 }
 
 fn sync_layout_system(world: &mut World) {
-    let half_w = Fixed::from_int(IMG_THUMBS_UP_WIDTH as i32 / 2);
-    let half_h = Fixed::from_int(IMG_THUMBS_UP_HEIGHT as i32 / 2);
+    let half_w = Fixed::from_int(IMG_THUMBS_UP.width as i32 / 2);
+    let half_h = Fixed::from_int(IMG_THUMBS_UP.height as i32 / 2);
     let mut buf = Vec::new();
     world.query::<PhysicsBody>().collect_into(&mut buf);
     for e in buf {
@@ -162,8 +162,8 @@ pub fn setup(app: &mut App<impl mirui::backend::Backend>) {
         }
     };
 
-    let iw = IMG_THUMBS_UP_WIDTH;
-    let ih = IMG_THUMBS_UP_HEIGHT;
+    let iw = IMG_THUMBS_UP.width;
+    let ih = IMG_THUMBS_UP.height;
     let cx = Fixed::from_int(W as i32 / 2);
     let cy = Fixed::from_int(H as i32 / 2);
     let r = Fixed::from_int(30);
@@ -187,7 +187,7 @@ pub fn setup(app: &mut App<impl mirui::backend::Backend>) {
                 top: pos.1.to_int() - ih as i32 / 2,
                 width: iw,
                 height: ih,
-                image: Image::new(Vec::from(IMG_THUMBS_UP), iw, ih)
+                image: Image::new(&IMG_THUMBS_UP)
             ) [
                 PhysicsBody { x: pos.0, y: pos.1 },
                 Velocity { vx: pos.2, vy: pos.3 },

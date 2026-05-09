@@ -112,6 +112,24 @@ impl<'a> St7735<'a> {
         }
         self.cs.set_high();
     }
+
+    pub fn push_region_raw(&mut self, rgb565: &[u8], fb_w: u16, x: u16, y: u16, w: u16, h: u16) {
+        const BATCH_ROWS: usize = 16;
+        self.set_window(x, y, x + w - 1, y + h - 1);
+        self.cs.set_low();
+        self.dc.set_high();
+        let stride = fb_w as usize * 2;
+        let mut row = 0usize;
+        while row < h as usize {
+            let rows_this_batch = BATCH_ROWS.min(h as usize - row);
+            for r in 0..rows_this_batch {
+                let src_off = (y as usize + row + r) * stride + x as usize * 2;
+                self.spi.write(&rgb565[src_off..src_off + w as usize * 2]).ok();
+            }
+            row += rows_this_batch;
+        }
+        self.cs.set_high();
+    }
 }
 
 pub fn delay_ms(ms: u32) {

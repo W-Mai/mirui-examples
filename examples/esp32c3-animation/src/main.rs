@@ -30,6 +30,7 @@ pub struct FrameCounter(pub u32);
 struct FpsState { count: u32, last_tick: u32, display: u32 }
 
 static mut FPS_DISPLAY: u32 = 0;
+static mut FLUSH_ACC: u32 = 0;
 
 fn frame_counter_system(world: &mut World) {
     if let Some(fc) = world.resource_mut::<FrameCounter>() {
@@ -73,17 +74,20 @@ fn main() -> ! {
     lcd.init(&mut rst);
     bl.set_high();
 
-    let backend = FramebufBackend::new(W, H, move |buf: &[u8], area: &Rect| {
+    let backend = FramebufBackend::with_format(W, H, mirui::draw::texture::ColorFormat::RGB565Swapped, move |buf: &[u8], area: &Rect| {
+        let ft0 = systimer_now();
         let (x0, y0, x1, y1) = area.pixel_bounds();
         let x = x0.max(0) as u16;
         let y = y0.max(0) as u16;
         let w = ((x1.max(0) as u16).min(W)).saturating_sub(x);
         let h = ((y1.max(0) as u16).min(H)).saturating_sub(y);
         if w > 0 && h > 0 {
-            lcd.push_region(buf, W, x, y, w, h);
+            lcd.push_region_raw(buf, W, x, y, w, h);
         }
         let fps = unsafe { FPS_DISPLAY };
         draw_fps_lcd(&mut lcd, fps);
+        let ft1 = systimer_now();
+        unsafe { FLUSH_ACC = FLUSH_ACC.wrapping_add(ft1.wrapping_sub(ft0)); }
     });
 
     let mut app = App::new(backend);
@@ -104,10 +108,50 @@ fn main() -> ! {
     #[cfg(feature = "demo-particles")]
     demo_particles::setup(&mut app);
 
+    app.perf = Some(mirui::draw::PerfCtx::new(|| systimer_now() as u64));
+
     app.render();
+    let mut perf_acc: [u32; 3] = [0; 3]; // systems, render, total
+    let mut perf_frames: u32 = 0;
     loop {
+        let t0 = systimer_now();
         app.systems.run_all(&mut app.world);
+        let t1 = systimer_now();
         app.render_dirty();
+        let t2 = systimer_now();
+
+        perf_acc[0] = perf_acc[0].wrapping_add(t1.wrapping_sub(t0));
+        perf_acc[1] = perf_acc[1].wrapping_add(t2.wrapping_sub(t1));
+        perf_acc[2] = perf_acc[2].wrapping_add(t2.wrapping_sub(t0));
+        perf_frames += 1;
+        if perf_frames >= 100 {
+            let flush_us = unsafe { FLUSH_ACC } / 160 / 100;
+            unsafe { FLUSH_ACC = 0; }
+            let (fill_us, stroke_us, blit_us, label_us) = if let Some(p) = app.perf.as_mut() {
+                let r = (
+                    (p.fill / 160 / 100) as u32,
+                    (p.stroke / 160 / 100) as u32,
+                    (p.blit / 160 / 100) as u32,
+                    (p.label / 160 / 100) as u32,
+                );
+                p.reset();
+                r
+            } else {
+                (0, 0, 0, 0)
+            };
+            esp_println::println!(
+                "[perf] sys={}us fill={}us stroke={}us blit={}us label={}us flush={}us total={}us",
+                perf_acc[0] / 160 / 100,
+                fill_us,
+                stroke_us,
+                blit_us,
+                label_us,
+                flush_us,
+                perf_acc[2] / 160 / 100,
+            );
+            perf_acc = [0; 3];
+            perf_frames = 0;
+        }
     }
 }
 

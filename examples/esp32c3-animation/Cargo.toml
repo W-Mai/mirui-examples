@@ -14,9 +14,10 @@ demo-particles = []
 [dependencies]
 esp-hal = { version = "1.1.0", features = ["esp32c3"] }
 esp-alloc = "0.7"
+esp-println = { version = "0.14", features = ["esp32c3"] }
 esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c3"] }
 # Perf baseline: mirui commit f280542 (160fps three-body, partial refresh)
-mirui = { git = "https://github.com/W-Mai/mirui.git" }
+mirui = { git = "https://github.com/W-Mai/mirui.git", features = ["perf"] }
 mirui-macros = { git = "https://github.com/W-Mai/mirui.git" }
 
 [patch."https://github.com/W-Mai/mirui.git"]
