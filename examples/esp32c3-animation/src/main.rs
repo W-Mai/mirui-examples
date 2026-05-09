@@ -23,6 +23,8 @@ mod demo_subpixel;
 mod demo_particles;
 #[cfg(feature = "demo-shapes")]
 mod demo_shapes;
+#[cfg(feature = "demo-butterfly")]
+mod demo_butterfly;
 
 use board::{draw_fps_lcd, systimer_now, St7735, H, W};
 
@@ -52,7 +54,7 @@ fn fps_system(world: &mut World) {
     }
 }
 
-#[cfg(feature = "demo-shapes")]
+#[cfg(any(feature = "demo-shapes", feature = "demo-butterfly"))]
 #[esp_hal::main]
 fn main() -> ! {
     esp_alloc::heap_allocator!(size: 200 * 1024);
@@ -93,7 +95,11 @@ fn main() -> ! {
         },
     );
 
-    let mut demo = demo_shapes::ShapesDemo::new();
+    #[cfg(feature = "demo-shapes")]
+    let (mut demo, tag) = (demo_shapes::ShapesDemo::new(), "shapes");
+    #[cfg(feature = "demo-butterfly")]
+    let (mut demo, tag) = (demo_butterfly::ButterflyDemo::new(), "butterfly");
+
     let mut last_report = systimer_now();
     let mut frame_count: u32 = 0;
     loop {
@@ -101,14 +107,14 @@ fn main() -> ! {
         frame_count += 1;
         let now = systimer_now();
         if now.wrapping_sub(last_report) >= 160_000_000 {
-            esp_println::println!("[shapes] fps={}", frame_count);
+            esp_println::println!("[{}] fps={}", tag, frame_count);
             frame_count = 0;
             last_report = now;
         }
     }
 }
 
-#[cfg(not(feature = "demo-shapes"))]
+#[cfg(not(any(feature = "demo-shapes", feature = "demo-butterfly")))]
 #[esp_hal::main]
 fn main() -> ! {
     esp_alloc::heap_allocator!(size: 200 * 1024);

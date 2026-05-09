@@ -9,6 +9,7 @@ demo-threebody = []
 demo-subpixel = []
 demo-particles = []
 demo-shapes = []
+demo-butterfly = []
 
 [package.metadata.esp-hal]
 
