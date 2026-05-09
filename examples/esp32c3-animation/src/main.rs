@@ -19,6 +19,8 @@ mod board;
 mod demo_threebody;
 #[cfg(feature = "demo-subpixel")]
 mod demo_subpixel;
+#[cfg(feature = "demo-particles")]
+mod demo_particles;
 
 use board::{draw_fps_lcd, systimer_now, St7735, H, W};
 
@@ -98,6 +100,9 @@ fn main() -> ! {
 
     #[cfg(feature = "demo-subpixel")]
     demo_subpixel::setup(&mut app);
+
+    #[cfg(feature = "demo-particles")]
+    demo_particles::setup(&mut app);
 
     app.render();
     loop {
