@@ -72,10 +72,11 @@ fn main() -> ! {
     bl.set_high();
 
     let backend = FramebufBackend::new(W, H, move |buf: &[u8], area: &Rect| {
-        let x = area.x.to_int().max(0) as u16;
-        let y = area.y.to_int().max(0) as u16;
-        let w = (area.w.to_int() as u16).min(W - x);
-        let h = (area.h.to_int() as u16).min(H - y);
+        let (x0, y0, x1, y1) = area.pixel_bounds();
+        let x = x0.max(0) as u16;
+        let y = y0.max(0) as u16;
+        let w = ((x1.max(0) as u16).min(W)).saturating_sub(x);
+        let h = ((y1.max(0) as u16).min(H)).saturating_sub(y);
         if w > 0 && h > 0 {
             lcd.push_region(buf, W, x, y, w, h);
         }
