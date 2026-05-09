@@ -21,6 +21,8 @@ mod demo_threebody;
 mod demo_subpixel;
 #[cfg(feature = "demo-particles")]
 mod demo_particles;
+#[cfg(feature = "demo-shapes")]
+mod demo_shapes;
 
 use board::{draw_fps_lcd, systimer_now, St7735, H, W};
 
@@ -50,6 +52,63 @@ fn fps_system(world: &mut World) {
     }
 }
 
+#[cfg(feature = "demo-shapes")]
+#[esp_hal::main]
+fn main() -> ! {
+    esp_alloc::heap_allocator!(size: 200 * 1024);
+    let peripherals = esp_hal::init(esp_hal::Config::default());
+
+    let spi = Spi::new(
+        peripherals.SPI2,
+        SpiConfig::default()
+            .with_frequency(Rate::from_mhz(32))
+            .with_mode(SpiMode::_0),
+    )
+    .unwrap()
+    .with_sck(peripherals.GPIO5)
+    .with_mosi(peripherals.GPIO4);
+
+    let cs = Output::new(peripherals.GPIO6, Level::High, OutputConfig::default());
+    let dc = Output::new(peripherals.GPIO7, Level::Low, OutputConfig::default());
+    let mut rst = Output::new(peripherals.GPIO3, Level::High, OutputConfig::default());
+    let mut bl = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());
+
+    let mut lcd = St7735 { spi, dc, cs };
+    lcd.init(&mut rst);
+    bl.set_high();
+
+    let mut fb = FramebufBackend::with_format(
+        W,
+        H,
+        mirui::draw::texture::ColorFormat::RGB565Swapped,
+        move |buf: &[u8], area: &Rect| {
+            let (x0, y0, x1, y1) = area.pixel_bounds();
+            let x = x0.max(0) as u16;
+            let y = y0.max(0) as u16;
+            let w = ((x1.max(0) as u16).min(W)).saturating_sub(x);
+            let h = ((y1.max(0) as u16).min(H)).saturating_sub(y);
+            if w > 0 && h > 0 {
+                lcd.push_region_raw(buf, W, x, y, w, h);
+            }
+        },
+    );
+
+    let mut demo = demo_shapes::ShapesDemo::new();
+    let mut last_report = systimer_now();
+    let mut frame_count: u32 = 0;
+    loop {
+        demo.step(&mut fb);
+        frame_count += 1;
+        let now = systimer_now();
+        if now.wrapping_sub(last_report) >= 160_000_000 {
+            esp_println::println!("[shapes] fps={}", frame_count);
+            frame_count = 0;
+            last_report = now;
+        }
+    }
+}
+
+#[cfg(not(feature = "demo-shapes"))]
 #[esp_hal::main]
 fn main() -> ! {
     esp_alloc::heap_allocator!(size: 200 * 1024);
@@ -156,4 +215,9 @@ fn main() -> ! {
 }
 
 #[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! { loop {} }
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    esp_println::println!("[PANIC] {}", info);
+    loop {
+        core::hint::spin_loop();
+    }
+}

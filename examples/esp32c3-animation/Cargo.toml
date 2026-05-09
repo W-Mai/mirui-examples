@@ -8,6 +8,7 @@ default = ["demo-threebody"]
 demo-threebody = []
 demo-subpixel = []
 demo-particles = []
+demo-shapes = []
 
 [package.metadata.esp-hal]
 
