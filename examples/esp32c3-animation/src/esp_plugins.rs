@@ -19,7 +19,7 @@ pub struct SystimerClockPlugin;
 impl<B, F> Plugin<B, F> for SystimerClockPlugin
 where
     B: Backend,
-    F: RendererFactory,
+    F: RendererFactory<B>,
 {
     fn build(&mut self, app: &mut App<B, F>) {
         let start_ticks = systimer_now() as u64;
@@ -58,7 +58,7 @@ impl Default for EspPerfSummaryPlugin {
 impl<B, F> Plugin<B, F> for EspPerfSummaryPlugin
 where
     B: Backend,
-    F: RendererFactory,
+    F: RendererFactory<B>,
 {
     fn build(&mut self, _app: &mut App<B, F>) {}
 

@@ -30,7 +30,7 @@ fn bar_move_system(world: &mut World) {
     }
 }
 
-pub fn setup(app: &mut App<impl mirui::backend::Backend>) {
+pub fn setup(app: &mut App<impl mirui::backend::FramebufferAccess>) {
     app.add_system(bar_move_system);
 
     let world = &mut app.world;

@@ -128,7 +128,7 @@ fn sync_layout_system(world: &mut World) {
     }
 }
 
-pub fn setup(app: &mut App<impl mirui::backend::Backend>) {
+pub fn setup(app: &mut App<impl mirui::backend::FramebufferAccess>) {
     app.add_system(physics_tick_system);
     app.add_system(kick_system);
     app.add_system(sync_layout_system);

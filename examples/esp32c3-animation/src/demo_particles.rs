@@ -106,7 +106,7 @@ fn bar_system(world: &mut World) {
     }
 }
 
-pub fn setup(app: &mut App<impl mirui::backend::Backend>) {
+pub fn setup(app: &mut App<impl mirui::backend::FramebufferAccess>) {
     app.add_system(particle_system);
     app.add_system(pulse_ring_system);
     app.add_system(bar_system);
