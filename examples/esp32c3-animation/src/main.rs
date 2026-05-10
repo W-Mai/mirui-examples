@@ -15,6 +15,7 @@ use mirui::ecs::World;
 use mirui::types::Rect;
 
 mod board;
+mod esp_plugins;
 #[cfg(feature = "demo-threebody")]
 mod demo_threebody;
 #[cfg(feature = "demo-subpixel")]
@@ -173,51 +174,11 @@ fn main() -> ! {
     #[cfg(feature = "demo-particles")]
     demo_particles::setup(&mut app);
 
-    app.perf = Some(mirui::draw::PerfCtx::new(|| systimer_now() as u64));
+    app.add_plugin(esp_plugins::SystimerClockPlugin)
+        .add_plugin(esp_plugins::EspPerfSummaryPlugin::default());
 
-    app.render();
-    let mut perf_acc: [u32; 3] = [0; 3]; // systems, render, total
-    let mut perf_frames: u32 = 0;
-    loop {
-        let t0 = systimer_now();
-        app.systems.run_all(&mut app.world);
-        let t1 = systimer_now();
-        app.render_dirty();
-        let t2 = systimer_now();
-
-        perf_acc[0] = perf_acc[0].wrapping_add(t1.wrapping_sub(t0));
-        perf_acc[1] = perf_acc[1].wrapping_add(t2.wrapping_sub(t1));
-        perf_acc[2] = perf_acc[2].wrapping_add(t2.wrapping_sub(t0));
-        perf_frames += 1;
-        if perf_frames >= 100 {
-            let flush_us = unsafe { FLUSH_ACC } / 160 / 100;
-            unsafe { FLUSH_ACC = 0; }
-            let (fill_us, stroke_us, blit_us, label_us) = if let Some(p) = app.perf.as_mut() {
-                let r = (
-                    (p.fill / 160 / 100) as u32,
-                    (p.stroke / 160 / 100) as u32,
-                    (p.blit / 160 / 100) as u32,
-                    (p.label / 160 / 100) as u32,
-                );
-                p.reset();
-                r
-            } else {
-                (0, 0, 0, 0)
-            };
-            esp_println::println!(
-                "[perf] sys={}us fill={}us stroke={}us blit={}us label={}us flush={}us total={}us",
-                perf_acc[0] / 160 / 100,
-                fill_us,
-                stroke_us,
-                blit_us,
-                label_us,
-                flush_us,
-                perf_acc[2] / 160 / 100,
-            );
-            perf_acc = [0; 3];
-            perf_frames = 0;
-        }
-    }
+    app.run();
+    unreachable!();
 }
 
 #[panic_handler]
