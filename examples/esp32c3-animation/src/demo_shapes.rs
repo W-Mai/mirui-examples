@@ -4,11 +4,10 @@
 //! Kept deliberately small: the per-pixel sqrt in fill_path's AA makes large
 //! filled regions extremely slow on ESP32-C3 (tracked as a Quality TODO).
 
-use mirui::backend::Backend;
 use mirui::backend::framebuf::FramebufBackend;
+use mirui::backend::{Backend, FramebufferAccess};
 use mirui::draw::backend::DrawBackend;
 use mirui::draw::sw_backend::SwDrawBackend;
-use mirui::draw::texture::Texture;
 use mirui::types::{Color, Fixed, Point, Rect};
 
 use crate::board::{H, W, systimer_now};
@@ -25,10 +24,8 @@ impl ShapesDemo {
     }
 
     pub fn step<F: FnMut(&[u8], &Rect)>(&mut self, fb: &mut FramebufBackend<F>) {
-        let info = fb.display_info();
         {
-            let buf = fb.framebuffer();
-            let tex = Texture::new(buf, info.width, info.height, info.format);
+            let tex = fb.framebuffer();
             let mut backend = SwDrawBackend::new(tex);
 
             let full = Rect::new(0, 0, W, H);
