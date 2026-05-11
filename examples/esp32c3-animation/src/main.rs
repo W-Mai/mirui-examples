@@ -140,7 +140,7 @@ fn main() -> ! {
     lcd.init(&mut rst);
     bl.set_high();
 
-    let backend = FramebufBackend::with_format(W, H, mirui::draw::texture::ColorFormat::RGB565Swapped, move |buf: &[u8], area: &Rect| {
+    let flush_cb = move |buf: &[u8], area: &Rect| {
         let ft0 = systimer_now();
         let (x0, y0, x1, y1) = area.pixel_bounds();
         let x = x0.max(0) as u16;
@@ -153,8 +153,26 @@ fn main() -> ! {
         let fps = unsafe { FPS_DISPLAY };
         draw_fps_lcd(&mut lcd, fps);
         let ft1 = systimer_now();
-        unsafe { FLUSH_ACC = FLUSH_ACC.wrapping_add(ft1.wrapping_sub(ft0)); }
-    });
+        unsafe {
+            FLUSH_ACC = FLUSH_ACC.wrapping_add(ft1.wrapping_sub(ft0));
+        }
+    };
+
+    #[cfg(feature = "demo-hidpi-downscale")]
+    let backend = FramebufBackend::with_scale_and_format(
+        W,
+        H,
+        mirui::types::Fixed::ONE / mirui::types::Fixed::from(2),
+        mirui::draw::texture::ColorFormat::RGB565Swapped,
+        flush_cb,
+    );
+    #[cfg(not(feature = "demo-hidpi-downscale"))]
+    let backend = FramebufBackend::with_format(
+        W,
+        H,
+        mirui::draw::texture::ColorFormat::RGB565Swapped,
+        flush_cb,
+    );
 
     let mut app = App::new(backend);
 
@@ -164,9 +182,12 @@ fn main() -> ! {
     app.world.insert_resource(FrameCounter(0));
     app.world.insert_resource(FpsState { count: 0, last_tick: systimer_now(), display: 0 });
 
-    // Demo-specific setup
-    #[cfg(feature = "demo-threebody")]
-    demo_threebody::setup(&mut app);
+    // HiDPI downscale doubles the logical viewport (128 → 256),
+    // so spring length and body count both scale up to match.
+    #[cfg(all(feature = "demo-threebody", not(feature = "demo-hidpi-downscale")))]
+    demo_threebody::setup(&mut app, 3, mirui::types::Fixed::from_int(30));
+    #[cfg(all(feature = "demo-threebody", feature = "demo-hidpi-downscale"))]
+    demo_threebody::setup(&mut app, 6, mirui::types::Fixed::from_int(60));
 
     #[cfg(feature = "demo-subpixel")]
     demo_subpixel::setup(&mut app);
