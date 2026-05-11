@@ -166,7 +166,15 @@ fn main() -> ! {
         mirui::draw::texture::ColorFormat::RGB565Swapped,
         flush_cb,
     );
-    #[cfg(not(feature = "demo-hidpi-downscale"))]
+    #[cfg(feature = "demo-hidpi-upscale")]
+    let backend = FramebufBackend::with_scale_and_format(
+        W,
+        H,
+        mirui::types::Fixed::from(2),
+        mirui::draw::texture::ColorFormat::RGB565Swapped,
+        flush_cb,
+    );
+    #[cfg(not(any(feature = "demo-hidpi-downscale", feature = "demo-hidpi-upscale")))]
     let backend = FramebufBackend::with_format(
         W,
         H,
@@ -183,11 +191,16 @@ fn main() -> ! {
     app.world.insert_resource(FpsState { count: 0, last_tick: systimer_now(), display: 0 });
 
     // HiDPI downscale doubles the logical viewport (128 → 256),
-    // so spring length and body count both scale up to match.
-    #[cfg(all(feature = "demo-threebody", not(feature = "demo-hidpi-downscale")))]
+    // HiDPI upscale halves it (128 → 64); both shift the demo tuning.
+    #[cfg(all(
+        feature = "demo-threebody",
+        not(any(feature = "demo-hidpi-downscale", feature = "demo-hidpi-upscale"))
+    ))]
     demo_threebody::setup(&mut app, 3, mirui::types::Fixed::from_int(30));
     #[cfg(all(feature = "demo-threebody", feature = "demo-hidpi-downscale"))]
     demo_threebody::setup(&mut app, 6, mirui::types::Fixed::from_int(60));
+    #[cfg(all(feature = "demo-threebody", feature = "demo-hidpi-upscale"))]
+    demo_threebody::setup(&mut app, 3, mirui::types::Fixed::from_int(15));
 
     #[cfg(feature = "demo-subpixel")]
     demo_subpixel::setup(&mut app);

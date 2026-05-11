@@ -14,6 +14,10 @@ demo-butterfly = []
 # (scale=0.5),layout 写 logical,backend 按 scale 在 raster 时下采样。
 # 目前与 demo-threebody 联用:6 体 N-body。
 demo-hidpi-downscale = []
+# HiDPI 上采样模式: 物理 framebuffer 128×128,logical 空间 64×64 (scale=2)。
+# widget 写 logical 尺寸但 raster 放大成 2×2 物理块,视觉上变"像素风"。
+# 用来 benchmark sw-blit-fast-path 的 2× integer 热路径。
+demo-hidpi-upscale = []
 
 [package.metadata.esp-hal]
 
