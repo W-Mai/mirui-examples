@@ -62,15 +62,24 @@ fn fps_system(world: &mut World) {
         unsafe {
             FPS_DISPLAY = fps.display;
         }
-        let (fill_ns, fill_cnt, blit_ns, blit_cnt) = mirui::draw::quad_perf::take();
-        let fill_us = fill_ns / 160;
-        let blit_us = blit_ns / 160;
+        let s = mirui::draw::quad_perf::take();
+        let fill_us = s.fill_ticks / 160;
+        let blit_us = s.blit_ticks / 160;
         esp_println::println!(
-            "[quad] fill: {} calls {} us  blit: {} calls {} us",
-            fill_cnt,
+            "[quad] fill: {} calls {} us ({} px scan / {} draw / inset_hit {} / slow_hit {})",
+            s.fill_count,
             fill_us,
-            blit_cnt,
-            blit_us
+            s.fill_scanned,
+            s.fill_drawn,
+            s.fill_inset_hit,
+            s.fill_slow_hit
+        );
+        esp_println::println!(
+            "[quad] blit: {} calls {} us ({} px scan / {} draw)",
+            s.blit_count,
+            blit_us,
+            s.blit_scanned,
+            s.blit_drawn
         );
     }
 }
