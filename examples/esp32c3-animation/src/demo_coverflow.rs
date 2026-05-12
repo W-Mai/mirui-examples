@@ -88,14 +88,17 @@ fn layout_system(world: &mut World) {
         mirui::widget::set_position(world, e, tx, ty);
 
         let relative = Fixed::from_int(idx) - (offset + centre_offset) / slot_stride;
-        let tilt = Fixed::ZERO - relative * Fixed::from_int(28);
-        world.insert(
-            e,
-            WidgetTransform3D(Transform3D::rotate_y_perspective(
-                tilt,
-                Fixed::from_int(PERSPECTIVE),
-            )),
-        );
+        let tilt_y = Fixed::ZERO - relative * Fixed::from_int(40);
+        let phase_x = world
+            .resource::<SwayPhase>()
+            .map(|p| p.0)
+            .unwrap_or(Fixed::ZERO);
+        let tilt_x =
+            Fixed::sin_deg(phase_x + relative * Fixed::from_int(60)) * Fixed::from_int(35);
+        let distance = Fixed::from_int(PERSPECTIVE);
+        let ty = Transform3D::rotate_y_perspective(tilt_y, distance);
+        let tx3d = Transform3D::rotate_x_perspective(tilt_x, distance);
+        world.insert(e, WidgetTransform3D(ty.compose(&tx3d)));
         world.insert(e, Dirty);
     }
 }
@@ -169,7 +172,8 @@ pub fn setup<B: mirui::backend::FramebufferAccess>(app: &mut App<B>) {
                     top: 0,
                     width: CARD_W,
                     height: CARD_H,
-                    bg_color: *item.1
+                    bg_color: *item.1,
+                    border_radius: 6
                 ) [
                     CarouselCard { index: item.0 },
                 ] {
