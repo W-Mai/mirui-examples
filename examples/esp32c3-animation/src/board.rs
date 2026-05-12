@@ -1,17 +1,17 @@
 use alloc::vec;
+use embedded_hal::spi::SpiBus;
 use esp_hal::gpio::Output;
-use esp_hal::spi::master::Spi;
 
 pub const W: u16 = 128;
 pub const H: u16 = 128;
 
-pub struct St7735<'a> {
-    pub spi: Spi<'a, esp_hal::Blocking>,
+pub struct St7735<'a, S: SpiBus<u8>> {
+    pub spi: S,
     pub dc: Output<'a>,
     pub cs: Output<'a>,
 }
 
-impl<'a> St7735<'a> {
+impl<'a, S: SpiBus<u8>> St7735<'a, S> {
     pub fn cmd(&mut self, c: u8) {
         self.cs.set_low();
         self.dc.set_low();
@@ -146,7 +146,7 @@ pub fn systimer_now() -> u32 {
     val
 }
 
-pub fn draw_fps_lcd(lcd: &mut St7735, fps: u32) {
+pub fn draw_fps_lcd<S: SpiBus<u8>>(lcd: &mut St7735<S>, fps: u32) {
     let mut num = [0u8; 8];
     let mut len = 0;
     let mut n = fps;

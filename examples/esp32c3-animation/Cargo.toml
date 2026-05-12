@@ -25,7 +25,8 @@ demo-hidpi-upscale = []
 [package.metadata.esp-hal]
 
 [dependencies]
-esp-hal = { version = "1.1.0", features = ["esp32c3"] }
+esp-hal = { version = "1.1.0", features = ["esp32c3", "unstable"] }
+embedded-hal = "1.0"
 esp-alloc = "0.7"
 esp-println = { version = "0.14", features = ["esp32c3"] }
 esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c3"] }

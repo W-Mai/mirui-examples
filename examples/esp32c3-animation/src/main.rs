@@ -4,6 +4,8 @@
 extern crate alloc;
 
 use esp_alloc as _;
+use esp_hal::dma::{DmaRxBuf, DmaTxBuf};
+use esp_hal::dma_buffers;
 use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::spi::master::{Config as SpiConfig, Spi};
 use esp_hal::spi::Mode as SpiMode;
@@ -49,13 +51,17 @@ fn frame_counter_system(world: &mut World) {
 
 fn fps_system(world: &mut World) {
     let now = systimer_now();
-    let Some(fps) = world.resource_mut::<FpsState>() else { return };
+    let Some(fps) = world.resource_mut::<FpsState>() else {
+        return;
+    };
     fps.count += 1;
     if now.wrapping_sub(fps.last_tick) >= 160_000_000 {
         fps.display = fps.count;
         fps.count = 0;
         fps.last_tick = now;
-        unsafe { FPS_DISPLAY = fps.display; }
+        unsafe {
+            FPS_DISPLAY = fps.display;
+        }
     }
 }
 
@@ -65,6 +71,10 @@ fn main() -> ! {
     esp_alloc::heap_allocator!(size: 200 * 1024);
     let peripherals = esp_hal::init(esp_hal::Config::default());
 
+    let (rx_buf, rx_desc, tx_buf, tx_desc) = dma_buffers!(32000);
+    let dma_rx_buf = DmaRxBuf::new(rx_desc, rx_buf).unwrap();
+    let dma_tx_buf = DmaTxBuf::new(tx_desc, tx_buf).unwrap();
+
     let spi = Spi::new(
         peripherals.SPI2,
         SpiConfig::default()
@@ -73,7 +83,9 @@ fn main() -> ! {
     )
     .unwrap()
     .with_sck(peripherals.GPIO5)
-    .with_mosi(peripherals.GPIO4);
+    .with_mosi(peripherals.GPIO4)
+    .with_dma(peripherals.DMA_CH0)
+    .with_buffers(dma_rx_buf, dma_tx_buf);
 
     let cs = Output::new(peripherals.GPIO6, Level::High, OutputConfig::default());
     let dc = Output::new(peripherals.GPIO7, Level::Low, OutputConfig::default());
@@ -125,6 +137,10 @@ fn main() -> ! {
     esp_alloc::heap_allocator!(size: 200 * 1024);
     let peripherals = esp_hal::init(esp_hal::Config::default());
 
+    let (rx_buf, rx_desc, tx_buf, tx_desc) = dma_buffers!(32000);
+    let dma_rx_buf = DmaRxBuf::new(rx_desc, rx_buf).unwrap();
+    let dma_tx_buf = DmaTxBuf::new(tx_desc, tx_buf).unwrap();
+
     let spi = Spi::new(
         peripherals.SPI2,
         SpiConfig::default()
@@ -133,7 +149,9 @@ fn main() -> ! {
     )
     .unwrap()
     .with_sck(peripherals.GPIO5)
-    .with_mosi(peripherals.GPIO4);
+    .with_mosi(peripherals.GPIO4)
+    .with_dma(peripherals.DMA_CH0)
+    .with_buffers(dma_rx_buf, dma_tx_buf);
 
     let cs = Output::new(peripherals.GPIO6, Level::High, OutputConfig::default());
     let dc = Output::new(peripherals.GPIO7, Level::Low, OutputConfig::default());
