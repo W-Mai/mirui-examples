@@ -26,6 +26,8 @@ mod demo_particles;
 mod demo_shapes;
 #[cfg(feature = "demo-butterfly")]
 mod demo_butterfly;
+#[cfg(feature = "demo-flipcard")]
+mod demo_flipcard;
 
 use board::{draw_fps_lcd, systimer_now, St7735, H, W};
 
@@ -207,6 +209,9 @@ fn main() -> ! {
 
     #[cfg(feature = "demo-particles")]
     demo_particles::setup(&mut app);
+
+    #[cfg(feature = "demo-flipcard")]
+    demo_flipcard::setup(&mut app);
 
     app.add_plugin(esp_plugins::SystimerClockPlugin)
         .add_plugin(esp_plugins::EspPerfSummaryPlugin::default());
