@@ -62,6 +62,16 @@ fn fps_system(world: &mut World) {
         unsafe {
             FPS_DISPLAY = fps.display;
         }
+        let (fill_ns, fill_cnt, blit_ns, blit_cnt) = mirui::draw::quad_perf::take();
+        let fill_us = fill_ns / 160;
+        let blit_us = blit_ns / 160;
+        esp_println::println!(
+            "[quad] fill: {} calls {} us  blit: {} calls {} us",
+            fill_cnt,
+            fill_us,
+            blit_cnt,
+            blit_us
+        );
     }
 }
 
@@ -136,6 +146,10 @@ fn main() -> ! {
 fn main() -> ! {
     esp_alloc::heap_allocator!(size: 200 * 1024);
     let peripherals = esp_hal::init(esp_hal::Config::default());
+
+    unsafe {
+        mirui::draw::quad_perf::CLOCK = || board::systimer_now() as u64;
+    }
 
     let (rx_buf, rx_desc, tx_buf, tx_desc) = dma_buffers!(32000);
     let dma_rx_buf = DmaRxBuf::new(rx_desc, rx_buf).unwrap();
