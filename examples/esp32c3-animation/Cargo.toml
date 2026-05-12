@@ -12,6 +12,7 @@ demo-shapes = []
 demo-butterfly = []
 # 2.5D 单卡翻转,绕 Y 轴 perspective
 demo-flipcard = []
+demo-coverflow = []
 # HiDPI 下采样模式: 物理 framebuffer 不变(128×128),但 logical 空间扩为 256×256
 # (scale=0.5),layout 写 logical,backend 按 scale 在 raster 时下采样。
 # 目前与 demo-threebody 联用:6 体 N-body。
