@@ -17,7 +17,7 @@ use mirui::surface::framebuf::FramebufSurface;
 use mirui::surface::{Surface, FramebufferAccess};
 use mirui::draw::canvas::Canvas;
 use mirui::draw::path::Path;
-use mirui::draw::sw_backend::SwRenderer;
+use mirui::draw::sw::SwRenderer;
 use mirui::types::{Color, Fixed, Point, Rect};
 
 use crate::board::{H, W, systimer_now};

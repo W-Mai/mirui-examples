@@ -5,21 +5,36 @@ edition = "2024"
 
 [features]
 default = ["demo-threebody"]
-demo-threebody = []
-demo-subpixel = []
-demo-particles = []
+# Draw a tiny FPS readout on the LCD after every flush. Off by default
+# because the bitmap poke adds ~1% overhead per frame and corrupts
+# pixels that the demo re-draws anyway. Flip on for any demo:
+#   cargo run ... --features demo-coverflow,fps-overlay
+fps-overlay = []
+
+# Internal marker: this demo runs on top of `mirui::App` (ECS world,
+# systems, plugins). Consumers never set this directly — each App-family
+# demo enables it implicitly via its own feature.
+app-demo = []
+
+# App-family demos (ECS-based).
+demo-threebody = ["app-demo"]
+demo-subpixel = ["app-demo"]
+demo-particles = ["app-demo"]
+demo-flipcard = ["app-demo"]     # 2.5D single-card flip around Y with perspective.
+demo-coverflow = ["app-demo"]
+
+# Standalone demos that drive FramebufSurface directly, no ECS.
 demo-shapes = []
 demo-butterfly = []
-# 2.5D 单卡翻转,绕 Y 轴 perspective
-demo-flipcard = []
-demo-coverflow = []
-# HiDPI 下采样模式: 物理 framebuffer 不变(128×128),但 logical 空间扩为 256×256
-# (scale=0.5),layout 写 logical,backend 按 scale 在 raster 时下采样。
-# 目前与 demo-threebody 联用:6 体 N-body。
+# HiDPI downscale: physical framebuffer stays at 128×128, logical space
+# expands to 256×256 (scale = 0.5). Layout is written in logical units;
+# the backend downsamples during rasterization. Pairs with demo-threebody
+# to fit a 6-body N-body scene.
 demo-hidpi-downscale = []
-# HiDPI 上采样模式: 物理 framebuffer 128×128,logical 空间 64×64 (scale=2)。
-# widget 写 logical 尺寸但 raster 放大成 2×2 物理块,视觉上变"像素风"。
-# 用来 benchmark sw-blit-fast-path 的 2× integer 热路径。
+# HiDPI upscale: physical framebuffer 128×128, logical space 64×64
+# (scale = 2). Widgets use logical sizes, rastered as 2×2 physical
+# blocks — looks pixel-art and benches sw-blit-fast-path's 2× integer
+# hot path.
 demo-hidpi-upscale = []
 
 [package.metadata.esp-hal]

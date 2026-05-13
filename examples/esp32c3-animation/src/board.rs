@@ -1,3 +1,4 @@
+#[cfg(feature = "fps-overlay")]
 use alloc::vec;
 use embedded_hal::spi::SpiBus;
 use esp_hal::gpio::Output;
@@ -85,34 +86,6 @@ impl<'a, S: SpiBus<u8>> St7735<'a, S> {
         self.cmd(0x2C);
     }
 
-    pub fn push_region(&mut self, rgba: &[u8], fb_w: u16, x: u16, y: u16, w: u16, h: u16) {
-        const BATCH_ROWS: usize = 16;
-        self.set_window(x, y, x + w - 1, y + h - 1);
-        self.cs.set_low();
-        self.dc.set_high();
-        let mut buf = vec![0u8; w as usize * 2 * BATCH_ROWS];
-        let mut row = 0usize;
-        while row < h as usize {
-            let rows_this_batch = BATCH_ROWS.min(h as usize - row);
-            let buf_len = w as usize * 2 * rows_this_batch;
-            for r in 0..rows_this_batch {
-                for col in 0..w as usize {
-                    let i = ((y as usize + row + r) * fb_w as usize + x as usize + col) * 4;
-                    let rv = rgba[i] as u16;
-                    let gv = rgba[i + 1] as u16;
-                    let bv = rgba[i + 2] as u16;
-                    let px = ((rv >> 3) << 11) | ((gv >> 2) << 5) | (bv >> 3);
-                    let off = (r * w as usize + col) * 2;
-                    buf[off] = (px >> 8) as u8;
-                    buf[off + 1] = px as u8;
-                }
-            }
-            self.spi.write(&buf[..buf_len]).ok();
-            row += rows_this_batch;
-        }
-        self.cs.set_high();
-    }
-
     pub fn push_region_raw(&mut self, rgb565: &[u8], fb_w: u16, x: u16, y: u16, w: u16, h: u16) {
         const BATCH_ROWS: usize = 16;
         self.set_window(x, y, x + w - 1, y + h - 1);
@@ -146,6 +119,7 @@ pub fn systimer_now() -> u32 {
     val
 }
 
+#[cfg(feature = "fps-overlay")]
 pub fn draw_fps_lcd<S: SpiBus<u8>>(lcd: &mut St7735<S>, fps: u32) {
     let mut num = [0u8; 8];
     let mut len = 0;
