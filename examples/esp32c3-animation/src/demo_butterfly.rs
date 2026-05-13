@@ -13,11 +13,11 @@
 //! flight … caused by the turbulence created by the small whirlpools formed
 //! by the wings during flight."
 
-use mirui::backend::framebuf::FramebufBackend;
-use mirui::backend::{Backend, FramebufferAccess};
-use mirui::draw::backend::DrawBackend;
+use mirui::surface::framebuf::FramebufSurface;
+use mirui::surface::{Surface, FramebufferAccess};
+use mirui::draw::canvas::Canvas;
 use mirui::draw::path::Path;
-use mirui::draw::sw_backend::SwDrawBackend;
+use mirui::draw::sw_backend::SwRenderer;
 use mirui::types::{Color, Fixed, Point, Rect};
 
 use crate::board::{H, W, systimer_now};
@@ -33,10 +33,10 @@ impl ButterflyDemo {
         }
     }
 
-    pub fn step<F: FnMut(&[u8], &Rect)>(&mut self, fb: &mut FramebufBackend<F>) {
+    pub fn step<F: FnMut(&[u8], &Rect)>(&mut self, fb: &mut FramebufSurface<F>) {
         {
             let tex = fb.framebuffer();
-            let mut backend = SwDrawBackend::new(tex);
+            let mut backend = SwRenderer::new(tex);
 
             let full = Rect::new(0, 0, W, H);
             backend.clear(&full, &Color::rgb(18, 22, 34));
@@ -132,7 +132,7 @@ impl ButterflyDemo {
 /// is no visible seam where they meet. When `inner=true` a smaller copy in a
 /// brighter colour is drawn on top to suggest wing venation/pattern.
 fn draw_wing(
-    backend: &mut SwDrawBackend,
+    backend: &mut SwRenderer,
     clip: &Rect,
     cx: Fixed,
     cy: Fixed,

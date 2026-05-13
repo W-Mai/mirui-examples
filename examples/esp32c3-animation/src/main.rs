@@ -12,7 +12,7 @@ use esp_hal::spi::Mode as SpiMode;
 use esp_hal::time::Rate;
 
 use mirui::app::App;
-use mirui::backend::framebuf::FramebufBackend;
+use mirui::surface::framebuf::FramebufSurface;
 use mirui::ecs::World;
 use mirui::types::Rect;
 
@@ -115,7 +115,7 @@ fn main() -> ! {
     lcd.init(&mut rst);
     bl.set_high();
 
-    let mut fb = FramebufBackend::with_format(
+    let mut fb = FramebufSurface::with_format(
         W,
         H,
         mirui::draw::texture::ColorFormat::RGB565Swapped,
@@ -204,7 +204,7 @@ fn main() -> ! {
     };
 
     #[cfg(feature = "demo-hidpi-downscale")]
-    let backend = FramebufBackend::with_scale_and_format(
+    let backend = FramebufSurface::with_scale_and_format(
         W,
         H,
         mirui::types::Fixed::ONE / mirui::types::Fixed::from(2),
@@ -212,7 +212,7 @@ fn main() -> ! {
         flush_cb,
     );
     #[cfg(feature = "demo-hidpi-upscale")]
-    let backend = FramebufBackend::with_scale_and_format(
+    let backend = FramebufSurface::with_scale_and_format(
         W,
         H,
         mirui::types::Fixed::from(2),
@@ -220,7 +220,7 @@ fn main() -> ! {
         flush_cb,
     );
     #[cfg(not(any(feature = "demo-hidpi-downscale", feature = "demo-hidpi-upscale")))]
-    let backend = FramebufBackend::with_format(
+    let backend = FramebufSurface::with_format(
         W,
         H,
         mirui::draw::texture::ColorFormat::RGB565Swapped,

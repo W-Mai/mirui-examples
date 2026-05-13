@@ -1,13 +1,13 @@
-//! Direct DrawBackend-API demo — exercises draw_line and draw_arc against
+//! Direct Canvas-API demo — exercises draw_line and draw_arc against
 //! the framebuffer every frame without going through App/ECS.
 //!
 //! Kept deliberately small: the per-pixel sqrt in fill_path's AA makes large
 //! filled regions extremely slow on ESP32-C3 (tracked as a Quality TODO).
 
-use mirui::backend::framebuf::FramebufBackend;
-use mirui::backend::{Backend, FramebufferAccess};
-use mirui::draw::backend::DrawBackend;
-use mirui::draw::sw_backend::SwDrawBackend;
+use mirui::surface::framebuf::FramebufSurface;
+use mirui::surface::{Surface, FramebufferAccess};
+use mirui::draw::canvas::Canvas;
+use mirui::draw::sw_backend::SwRenderer;
 use mirui::types::{Color, Fixed, Point, Rect};
 
 use crate::board::{H, W, systimer_now};
@@ -23,10 +23,10 @@ impl ShapesDemo {
         }
     }
 
-    pub fn step<F: FnMut(&[u8], &Rect)>(&mut self, fb: &mut FramebufBackend<F>) {
+    pub fn step<F: FnMut(&[u8], &Rect)>(&mut self, fb: &mut FramebufSurface<F>) {
         {
             let tex = fb.framebuffer();
-            let mut backend = SwDrawBackend::new(tex);
+            let mut backend = SwRenderer::new(tex);
 
             let full = Rect::new(0, 0, W, H);
             backend.clear(&full, &Color::rgb(20, 20, 30));

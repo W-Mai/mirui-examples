@@ -1,7 +1,7 @@
 use alloc::boxed::Box;
 
 use mirui::app::{App, RendererFactory};
-use mirui::backend::Backend;
+use mirui::surface::Surface;
 use mirui::ecs::World;
 use mirui::plugin::Plugin;
 
@@ -18,7 +18,7 @@ pub struct SystimerClockPlugin;
 
 impl<B, F> Plugin<B, F> for SystimerClockPlugin
 where
-    B: Backend,
+    B: Surface,
     F: RendererFactory<B>,
 {
     fn build(&mut self, app: &mut App<B, F>) {
@@ -57,7 +57,7 @@ impl Default for EspPerfSummaryPlugin {
 
 impl<B, F> Plugin<B, F> for EspPerfSummaryPlugin
 where
-    B: Backend,
+    B: Surface,
     F: RendererFactory<B>,
 {
     fn build(&mut self, _app: &mut App<B, F>) {}

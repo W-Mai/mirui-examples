@@ -240,7 +240,7 @@ fn sync_layout_system(world: &mut World) {
 /// change — bodies always spread across the full logical viewport.
 /// `equilibrium` is the spring rest length for the inter-body force
 /// (classic 128-logical three-body chaos runs well at 30).
-pub fn setup<B: mirui::backend::FramebufferAccess>(
+pub fn setup<B: mirui::surface::FramebufferAccess>(
     app: &mut App<B>,
     n_bodies: usize,
     equilibrium: Fixed,

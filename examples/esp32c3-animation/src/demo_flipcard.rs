@@ -61,7 +61,7 @@ fn spin_system(world: &mut World) {
     }
 }
 
-pub fn setup<B: mirui::backend::FramebufferAccess>(app: &mut App<B>) {
+pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
     let (logical_w, logical_h) = {
         let info = app.backend.display_info();
         (info.width as i32, info.height as i32)
