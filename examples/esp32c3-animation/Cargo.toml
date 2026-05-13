@@ -10,6 +10,10 @@ default = ["demo-threebody"]
 # pixels that the demo re-draws anyway. Flip on for any demo:
 #   cargo run ... --features demo-coverflow,fps-overlay
 fps-overlay = []
+# Spin each small sprite in demo-threebody around its center. No effect
+# on other demos. Off by default because the per-body 2D rotation goes
+# through the quad path (SDF / supersample) and adds per-frame cost.
+spin = []
 
 # Internal marker: this demo runs on top of `mirui::App` (ECS world,
 # systems, plugins). Consumers never set this directly — each App-family

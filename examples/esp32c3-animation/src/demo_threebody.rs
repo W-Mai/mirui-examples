@@ -2,10 +2,16 @@ use alloc::vec::Vec;
 use mirui::app::App;
 use mirui::components::assets::*;
 use mirui::components::image::Image;
+#[cfg(feature = "spin")]
+use mirui::components::transform_3d::WidgetTransform3D;
 use mirui::ecs::World;
 use mirui::layout::*;
+#[cfg(feature = "spin")]
+use mirui::types::Transform3D;
 use mirui::types::{Color, Dimension, Fixed};
 use mirui::widget::builder::WidgetBuilder;
+#[cfg(feature = "spin")]
+use mirui::widget::dirty::Dirty;
 
 use crate::board::systimer_now;
 
@@ -17,6 +23,11 @@ struct PhysicsBody {
     x: Fixed,
     y: Fixed,
 }
+
+/// Self-rotation angle in degrees, accumulated each frame by
+/// `spin_system`. Per-body so each sprite can drift in phase.
+#[cfg(feature = "spin")]
+struct SpinAngle(Fixed);
 struct PhysicsTime {
     last_tick: u32,
     accumulator: u32,
@@ -221,6 +232,31 @@ fn kick_system(world: &mut World) {
     }
 }
 
+#[cfg(feature = "spin")]
+fn spin_system(world: &mut World) {
+    // Advance every spinning body's angle by a small step per frame.
+    // Wrap at 360° to keep the Fixed from drifting into large values
+    // that would weaken `cos_deg` / `sin_deg` precision.
+    const STEP_DEG: i32 = 3;
+    let full = Fixed::from_int(360);
+    let mut buf = Vec::new();
+    world.query::<SpinAngle>().collect_into(&mut buf);
+    for e in buf {
+        let angle = {
+            let Some(s) = world.get_mut::<SpinAngle>(e) else {
+                continue;
+            };
+            s.0 += Fixed::from_int(STEP_DEG);
+            if s.0 >= full {
+                s.0 -= full;
+            }
+            s.0
+        };
+        world.insert(e, WidgetTransform3D(Transform3D::rotate_deg(angle)));
+        world.insert(e, Dirty);
+    }
+}
+
 fn sync_layout_system(world: &mut World) {
     let half_w = Fixed::from_int(IMG_THUMBS_UP.width as i32 / 2);
     let half_h = Fixed::from_int(IMG_THUMBS_UP.height as i32 / 2);
@@ -252,6 +288,8 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(
     app.add_system(physics_tick_system);
     app.add_system(kick_system);
     app.add_system(sync_layout_system);
+    #[cfg(feature = "spin")]
+    app.add_system(spin_system);
 
     let world = &mut app.world;
     world.insert_resource(PhysicsTime {
@@ -340,6 +378,19 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(
             ] {}
         }
     };
+
+    // Seed each body with a staggered spin phase so the sprites don't
+    // all rotate in lock-step. Matches the DSL's spawn order.
+    #[cfg(feature = "spin")]
+    {
+        let n_f = Fixed::from_int(n as i32);
+        let mut bodies = Vec::new();
+        app.world.query::<PhysicsBody>().collect_into(&mut bodies);
+        for (i, e) in bodies.into_iter().enumerate() {
+            let phase = Fixed::from_int(360) * Fixed::from_int(i as i32) / n_f;
+            app.world.insert(e, SpinAngle(phase));
+        }
+    }
 
     app.set_root(root);
 }
