@@ -30,8 +30,11 @@ embedded-hal = "1.0"
 esp-alloc = "0.7"
 esp-println = { version = "0.14", features = ["esp32c3"] }
 esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c3"] }
-# Perf baseline: mirui commit f280542 (160fps three-body, partial refresh)
-mirui = { git = "https://github.com/W-Mai/mirui.git", features = ["perf"] }
+# Perf baseline: mirui commit f280542 (160fps three-body, partial refresh).
+# `default-features = false` drops quad-aa — the 2×2 supersample costs
+# ~7 ms/frame on cover-flow (33 fps → 27 fps) which the C3 can't spare.
+# Flip it back on for demos that care about edge quality more than fps.
+mirui = { git = "https://github.com/W-Mai/mirui.git", default-features = false, features = ["perf"] }
 mirui-macros = { git = "https://github.com/W-Mai/mirui.git" }
 
 [patch."https://github.com/W-Mai/mirui.git"]
