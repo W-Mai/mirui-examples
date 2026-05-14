@@ -1,4 +1,4 @@
-use mirui::anim::FrameClock;
+use mirui::ecs::MonoClock;
 use mirui::app::{App, RendererFactory};
 use mirui::ecs::World;
 use mirui::plugin::Plugin;
@@ -27,7 +27,7 @@ where
         unsafe {
             CLOCK_START = systimer_now() as u64;
         }
-        app.world.insert_resource(FrameClock::new(esp_clock_ns));
+        app.world.insert_resource(MonoClock::new(esp_clock_ns));
     }
 }
 
