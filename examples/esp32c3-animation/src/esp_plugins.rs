@@ -1,18 +1,20 @@
-use alloc::boxed::Box;
-
+use mirui::anim::FrameClock;
 use mirui::app::{App, RendererFactory};
-use mirui::surface::Surface;
 use mirui::ecs::World;
 use mirui::plugin::Plugin;
+use mirui::surface::Surface;
 
 use crate::board::systimer_now;
 
-/// CPU frequency in MHz. `systimer_now()` reads mcycle, which ticks at CPU
-/// clock rate, so `ticks / CPU_MHZ = µs` and `ticks * 1000 / CPU_MHZ = ns`.
 const CPU_MHZ: u64 = 160;
 
-/// Installs App::clock backed by the ESP32-C3 mcycle counter. Returns
-/// nanoseconds elapsed since the plugin was built.
+static mut CLOCK_START: u64 = 0;
+
+fn esp_clock_ns() -> u64 {
+    let now = systimer_now() as u64;
+    unsafe { now.wrapping_sub(CLOCK_START).saturating_mul(1000) / CPU_MHZ }
+}
+
 #[derive(Default)]
 pub struct SystimerClockPlugin;
 
@@ -22,17 +24,13 @@ where
     F: RendererFactory<B>,
 {
     fn build(&mut self, app: &mut App<B, F>) {
-        let start_ticks = systimer_now() as u64;
-        app.clock = Box::new(move || {
-            let now = systimer_now() as u64;
-            now.wrapping_sub(start_ticks).saturating_mul(1000) / CPU_MHZ
-        });
+        unsafe {
+            CLOCK_START = systimer_now() as u64;
+        }
+        app.world.insert_resource(FrameClock::new(esp_clock_ns));
     }
 }
 
-/// Prints average render time every N frames via esp-println. Uses the
-/// nanoseconds supplied by whichever clock plugin is installed (or 0 if
-/// none, in which case this plugin still reports frame count).
 pub struct EspPerfSummaryPlugin {
     frames_per_summary: u32,
     frame_count: u32,

@@ -1,4 +1,4 @@
-use mirui::anim::{self, ease, Animation, FrameClock, PlayMode};
+use mirui::anim::{self, ease, Animation, PlayMode};
 use mirui::app::App;
 use mirui::components::slider::Slider;
 use mirui::components::switch::Switch;
@@ -12,8 +12,6 @@ use mirui::widget::builder::WidgetBuilder;
 use mirui::widget::dirty::Dirty;
 
 use alloc::vec::Vec;
-
-use crate::board::systimer_now;
 
 mirui_macros::animation!(AnimateThumbX, |world, entity, value| {
     mirui::widget::set_position(world, entity, value, Fixed::from_int(2));
@@ -102,12 +100,7 @@ fn switch_handler(world: &mut World, entity: Entity, event: &GestureEvent) -> bo
     true
 }
 
-fn anim_clock() -> u64 {
-    (systimer_now() as u64).saturating_mul(1000) / 160
-}
-
 pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
-    app.world.insert_resource(FrameClock::new(anim_clock));
     app.add_system(anim::sync_delta_time_ms);
     app.add_system(AnimateThumbX::system());
     app.add_system(sim_timeline_system);
