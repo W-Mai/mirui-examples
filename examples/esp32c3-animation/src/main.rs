@@ -40,6 +40,8 @@ mod demo_butterfly;
 mod demo_flipcard;
 #[cfg(feature = "demo-coverflow")]
 mod demo_coverflow;
+#[cfg(feature = "demo-gesture")]
+mod demo_gesture;
 
 use board::{systimer_now, St7735, H, W};
 
@@ -271,6 +273,9 @@ fn main() -> ! {
 
         #[cfg(feature = "demo-coverflow")]
         demo_coverflow::setup(&mut app);
+
+        #[cfg(feature = "demo-gesture")]
+        demo_gesture::setup(&mut app);
 
         app.add_plugin(esp_plugins::SystimerClockPlugin)
             .add_plugin(esp_plugins::EspPerfSummaryPlugin::default());

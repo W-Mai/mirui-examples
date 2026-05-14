@@ -235,8 +235,8 @@ fn kick_system(world: &mut World) {
 #[cfg(feature = "spin")]
 fn spin_system(world: &mut World) {
     // Advance every spinning body's angle by a small step per frame.
-    // Wrap at 360° to keep the Fixed from drifting into large values
-    // that would weaken `cos_deg` / `sin_deg` precision.
+    // Wrap at 360° to keep the Fixed value bounded so `cos_deg` /
+    // `sin_deg` precision doesn't drift over long runs.
     const STEP_DEG: i32 = 3;
     let full = Fixed::from_int(360);
     let mut buf = Vec::new();

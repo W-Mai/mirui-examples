@@ -26,6 +26,7 @@ demo-subpixel = ["app-demo"]
 demo-particles = ["app-demo"]
 demo-flipcard = ["app-demo"]     # 2.5D single-card flip around Y with perspective.
 demo-coverflow = ["app-demo"]
+demo-gesture = ["app-demo"]
 
 # Standalone demos that drive FramebufSurface directly, no ECS.
 demo-shapes = []
