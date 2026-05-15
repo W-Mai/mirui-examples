@@ -241,31 +241,30 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
         },
     );
 
-    // Drag past the track endpoints so set_ratio clamps to exactly 0
-    // and 1; otherwise the thumb stops a few pixels short of each end
-    // and a sliver of fill remains visible at ratio=0.
+    // PointerDown must land inside the slider's hit rect (x=10..118).
+    // Drag from a point inside, then over-shoot the destination so
+    // set_ratio clamps to the exact endpoint (DragMove past the rect
+    // is fine — gesture targets latch on PointerDown).
     app.world.insert_resource(
         SimTimeline::new(alloc::vec![
             SimAction::Drag {
-                from: Point::new(8, 15),
+                from: Point::new(10, 15),
                 to: Point::new(120, 15),
                 duration_ms: 500,
                 ease: ease::ease_in_out_cubic,
             },
-            // Long pauses at each endpoint so a periodic capture has a
-            // good chance of landing on the static end states.
-            SimAction::Wait(2000),
+            SimAction::Wait(1000),
             SimAction::Tap(Point::new(27, 50)),
-            SimAction::Wait(1500),
+            SimAction::Wait(1000),
             SimAction::Drag {
-                from: Point::new(120, 15),
+                from: Point::new(117, 15),
                 to: Point::new(8, 15),
-                duration_ms: 500,
+                duration_ms: 300,
                 ease: ease::ease_in_out_cubic,
             },
-            SimAction::Wait(2000),
+            SimAction::Wait(1000),
             SimAction::Tap(Point::new(27, 50)),
-            SimAction::Wait(1500),
+            SimAction::Wait(1000),
         ])
         .looping(true),
     );
