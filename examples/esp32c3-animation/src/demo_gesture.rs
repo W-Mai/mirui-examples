@@ -241,26 +241,31 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
         },
     );
 
+    // Drag past the track endpoints so set_ratio clamps to exactly 0
+    // and 1; otherwise the thumb stops a few pixels short of each end
+    // and a sliver of fill remains visible at ratio=0.
     app.world.insert_resource(
         SimTimeline::new(alloc::vec![
             SimAction::Drag {
-                from: Point::new(15, 15),
-                to: Point::new(115, 15),
+                from: Point::new(8, 15),
+                to: Point::new(120, 15),
                 duration_ms: 500,
                 ease: ease::ease_in_out_cubic,
             },
-            SimAction::Wait(300),
+            // Long pauses at each endpoint so a periodic capture has a
+            // good chance of landing on the static end states.
+            SimAction::Wait(2000),
             SimAction::Tap(Point::new(27, 50)),
-            SimAction::Wait(400),
+            SimAction::Wait(1500),
             SimAction::Drag {
-                from: Point::new(115, 15),
-                to: Point::new(15, 15),
+                from: Point::new(120, 15),
+                to: Point::new(8, 15),
                 duration_ms: 500,
                 ease: ease::ease_in_out_cubic,
             },
-            SimAction::Wait(300),
+            SimAction::Wait(2000),
             SimAction::Tap(Point::new(27, 50)),
-            SimAction::Wait(400),
+            SimAction::Wait(1500),
         ])
         .looping(true),
     );
