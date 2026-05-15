@@ -48,6 +48,43 @@ use board::{systimer_now, St7735, H, W};
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
+const B64_ALPHABET: &[u8; 64] =
+    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+fn b64_encode(input: &[u8], out: &mut [u8]) -> usize {
+    let mut o = 0;
+    let mut i = 0;
+    while i + 3 <= input.len() {
+        let b0 = input[i];
+        let b1 = input[i + 1];
+        let b2 = input[i + 2];
+        out[o] = B64_ALPHABET[(b0 >> 2) as usize];
+        out[o + 1] = B64_ALPHABET[(((b0 & 0x03) << 4) | (b1 >> 4)) as usize];
+        out[o + 2] = B64_ALPHABET[(((b1 & 0x0f) << 2) | (b2 >> 6)) as usize];
+        out[o + 3] = B64_ALPHABET[(b2 & 0x3f) as usize];
+        i += 3;
+        o += 4;
+    }
+    let rem = input.len() - i;
+    if rem == 1 {
+        let b0 = input[i];
+        out[o] = B64_ALPHABET[(b0 >> 2) as usize];
+        out[o + 1] = B64_ALPHABET[((b0 & 0x03) << 4) as usize];
+        out[o + 2] = b'=';
+        out[o + 3] = b'=';
+        o += 4;
+    } else if rem == 2 {
+        let b0 = input[i];
+        let b1 = input[i + 1];
+        out[o] = B64_ALPHABET[(b0 >> 2) as usize];
+        out[o + 1] = B64_ALPHABET[(((b0 & 0x03) << 4) | (b1 >> 4)) as usize];
+        out[o + 2] = B64_ALPHABET[((b1 & 0x0f) << 2) as usize];
+        out[o + 3] = b'=';
+        o += 4;
+    }
+    o
+}
+
 // Latest FPS value (one-second window). Single-writer on single-core
 // RV32 with no reentrancy, so `static mut` is safe here.
 #[cfg(feature = "fps-overlay")]
@@ -147,6 +184,14 @@ fn main() -> ! {
     lcd.init(&mut rst);
     bl.set_high();
 
+    // Capture: every N flushes, emit the entire framebuffer as
+    // base64-encoded raw pixel bytes between [CAP_BEGIN]/[CAP_END]
+    // markers so a host script can dump it as a PNG. 32 KB at 115200
+    // baud takes ~4 s to drain; renderer stalls for that window. Set
+    // wide enough so most of the frame budget is still rendering.
+    let mut capture_counter: u32 = 0;
+    const CAPTURE_EVERY: u32 = 600;
+
     let flush_cb = move |buf: &[u8], area: &Rect| {
         #[cfg(feature = "app-demo")]
         let ft0 = systimer_now();
@@ -157,6 +202,29 @@ fn main() -> ! {
         let h = ((y1.max(0) as u16).min(H)).saturating_sub(y);
         if w > 0 && h > 0 {
             lcd.push_region_raw(buf, W, x, y, w, h);
+        }
+
+        capture_counter = capture_counter.wrapping_add(1);
+        if capture_counter % CAPTURE_EVERY == 0 {
+            esp_println::println!(
+                "[CAP_BEGIN] w={} h={} fmt=RGB565Swapped len={}",
+                W,
+                H,
+                buf.len()
+            );
+            // Chunked base64 to keep individual lines under typical UART
+            // ring buffer sizes; emit ~64 raw bytes per line.
+            const CHUNK: usize = 48;
+            let mut idx = 0;
+            while idx < buf.len() {
+                let end = (idx + CHUNK).min(buf.len());
+                let mut out = [0u8; 64 + 4];
+                let n = b64_encode(&buf[idx..end], &mut out);
+                let s = core::str::from_utf8(&out[..n]).unwrap_or("");
+                esp_println::println!("[CAP] {}", s);
+                idx = end;
+            }
+            esp_println::println!("[CAP_END]");
         }
         #[cfg(feature = "fps-overlay")]
         {
