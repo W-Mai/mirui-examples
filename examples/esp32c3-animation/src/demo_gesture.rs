@@ -1,4 +1,4 @@
-use mirui::anim::{self, ease, Animation, PlayMode};
+use mirui::anim::{self, Spring, ease};
 use mirui::app::App;
 use mirui::components::slider::Slider;
 use mirui::components::switch::Switch;
@@ -13,7 +13,7 @@ use mirui::widget::dirty::Dirty;
 
 use alloc::vec::Vec;
 
-mirui_macros::animation!(AnimateThumbX, |world, entity, value| {
+mirui_macros::animate!(AnimateThumbX, |world, entity, value| {
     mirui::widget::set_position(world, entity, value, Fixed::from_int(2));
 });
 
@@ -73,8 +73,10 @@ fn switch_handler(world: &mut World, entity: Entity, event: &GestureEvent) -> bo
 
     if let Some(children) = world.get::<mirui::widget::Children>(entity) {
         if let Some(&thumb) = children.0.first() {
+            // track 34 wide, thumb 14 wide, 2 px inset on each side ⇒
+            // off=2, on=34-14-2=18 keeps both ends symmetric.
             let target_x = if is_on {
-                Fixed::from_int(16)
+                Fixed::from_int(18)
             } else {
                 Fixed::from_int(2)
             };
@@ -87,13 +89,7 @@ fn switch_handler(world: &mut World, entity: Entity, event: &GestureEvent) -> bo
                 .unwrap_or(Fixed::from_int(2));
             world.insert(
                 thumb,
-                AnimateThumbX(Animation::new(
-                    current_x,
-                    target_x,
-                    200,
-                    ease::ease_out_cubic,
-                    PlayMode::Once,
-                )),
+                AnimateThumbX(Spring::new(current_x, target_x, 200, Fixed::ZERO).into()),
             );
         }
     }
