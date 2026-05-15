@@ -264,7 +264,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
         },
     );
 
-    let slider_track = mirui_macros::ui! {
+    mirui_macros::ui! {
         :(
             parent: root
             world: &mut app.world
@@ -308,9 +308,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             ) {}
         }
     };
-    let _ = slider_track;
-
-    let _switch_track = mirui_macros::ui! {
+    mirui_macros::ui! {
         :(
             parent: root
             world: &mut app.world
