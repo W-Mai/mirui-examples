@@ -1,13 +1,15 @@
-//! Layout (top → bottom):
-//!   y= 0..14   TabBar (3 tabs)
-//!   y=14..86   LazyList (8-slot pool over 50 rows, 12 px each)
-//!   y=86..108  Slider track (108 wide) + Switch (right side)
+//! Three-tab showcase on the 128×128 ESP32-C3 LCD:
+//!   tab A → LazyList (50 rows of 12 px)
+//!   tab B → Slider
+//!   tab C → Switch
+//! Tab indicator slide is mirui's built-in tab_view_system, not user code.
 
 use mirui::anim::{self, Tween, ease};
 use mirui::app::App;
 use mirui::components::lazy_list::{LazyList, LazyListBinder, LazyListPool, lazy_list_system};
 use mirui::components::slider::Slider;
 use mirui::components::switch::Switch;
+use mirui::components::tab_view::TabContent;
 use mirui::components::tabbar::TabBar;
 use mirui::ecs::{Entity, World};
 use mirui::event::GestureHandler;
@@ -27,42 +29,9 @@ const ROW_H: i32 = 12;
 const POOL_SIZE: usize = 8;
 const ITEM_COUNT: u32 = 50;
 
-mirui_macros::animate!(AnimateTabIndicator, |world, entity, value| {
-    if let Some(tb) = world.get_mut::<TabBar>(entity) {
-        tb.indicator_offset = value;
-    }
-    world.insert(entity, Dirty);
-});
-
 mirui_macros::animate!(AnimateThumbX, |world, entity, value| {
     mirui::widget::set_position(world, entity, value, Fixed::from_int(2));
 });
-
-struct LastTab(u8);
-
-fn observe_tabbar(world: &mut World) {
-    let tabbars: Vec<_> = world.query::<TabBar>().collect();
-    for entity in tabbars {
-        let current = match world.get::<TabBar>(entity) {
-            Some(tb) => tb.selected,
-            None => continue,
-        };
-        let from = world
-            .get::<LastTab>(entity)
-            .map(|s| s.0)
-            .unwrap_or(current);
-        if from == current {
-            continue;
-        }
-        let from_offset = Fixed::from_int(from as i32);
-        let to_offset = Fixed::from_int(current as i32);
-        world.insert(entity, LastTab(current));
-        world.insert(
-            entity,
-            AnimateTabIndicator(Tween::ease_to(from_offset, to_offset, 220).into()),
-        );
-    }
-}
 
 fn slider_handler(world: &mut World, entity: Entity, event: &GestureEvent) -> bool {
     let x = match event {
@@ -157,8 +126,6 @@ fn row_binder(world: &mut World, entity: Entity, index: u32) {
 pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
     app.add_system(anim::sync_delta_time_ms);
     app.add_system(AnimateThumbX::system());
-    app.add_system(AnimateTabIndicator::system());
-    app.add_system(observe_tabbar);
     app.add_system(lazy_list_system);
     app.add_system(sim_timeline_system);
 
@@ -182,202 +149,161 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             bg_color: Color::rgb(40, 40, 56),
             width: 128,
             height: 14
-        ) {
-            tab0 (
-                text: "A",
-                text_color: Color::rgb(220, 220, 230),
-                grow: 1.0,
-                align: AlignItems::Center,
-                justify: JustifyContent::Center
-            ) {}
-            tab1 (
-                text: "B",
-                text_color: Color::rgb(220, 220, 230),
-                grow: 1.0,
-                align: AlignItems::Center,
-                justify: JustifyContent::Center
-            ) {}
-            tab2 (
-                text: "C",
-                text_color: Color::rgb(220, 220, 230),
-                grow: 1.0,
-                align: AlignItems::Center,
-                justify: JustifyContent::Center
-            ) {}
+        ) [
+            TabBar::new(3).with_indicator(Color::rgb(88, 166, 255), 2)
+        ] {
+            tab0 ( text: "List", text_color: Color::rgb(220, 220, 230),
+                grow: 1.0, align: AlignItems::Center, justify: JustifyContent::Center ) {}
+            tab1 ( text: "Slide", text_color: Color::rgb(220, 220, 230),
+                grow: 1.0, align: AlignItems::Center, justify: JustifyContent::Center ) {}
+            tab2 ( text: "Sw", text_color: Color::rgb(220, 220, 230),
+                grow: 1.0, align: AlignItems::Center, justify: JustifyContent::Center ) {}
         }
     };
-    app.world.insert(
-        tabs,
-        TabBar::new(3).with_indicator(Color::rgb(88, 166, 255), 2),
-    );
 
-    let list = WidgetBuilder::new(&mut app.world)
-        .bg_color(Color::rgb(28, 28, 40))
-        .layout(LayoutStyle {
-            width: Dimension::px(128),
-            height: Dimension::px(72),
-            ..Default::default()
-        })
-        .id();
-    app.world.insert(list, mirui::widget::Parent(root));
-    if let Some(c) = app.world.get_mut::<mirui::widget::Children>(root) {
-        c.0.push(list);
-    }
+    // Tab A: LazyList (50 rows). Pool spawned via walk; bound after.
+    let list = mirui_macros::ui! {
+        :(
+            parent: root
+            world: &mut app.world
+        :)
 
-    let mut pool: Vec<Entity> = Vec::with_capacity(POOL_SIZE);
-    for _ in 0..POOL_SIZE {
-        let e = WidgetBuilder::new(&mut app.world)
-            .bg_color(Color::rgb(40, 40, 56))
-            .text_color(Color::rgb(220, 220, 230))
-            .layout(LayoutStyle {
-                position: Position::Absolute,
-                left: Dimension::Px(Fixed::ZERO),
-                top: Dimension::Px(Fixed::ZERO),
-                width: Dimension::px(128),
-                height: Dimension::px(ROW_H),
-                ..Default::default()
-            })
-            .id();
-        app.world.insert(e, mirui::widget::Parent(list));
-        pool.push(e);
-    }
-    app.world
-        .insert(list, mirui::widget::Children(pool.clone()));
-    app.world
-        .insert(list, LazyList::new(ITEM_COUNT, ROW_H, POOL_SIZE as u8));
+        list (
+            bg_color: Color::rgb(28, 28, 40),
+            width: 128,
+            height: 114
+        ) [
+            TabContent { tab_bar: tabs, index: 0 },
+            LazyList::new(ITEM_COUNT, ROW_H, POOL_SIZE as u8),
+            LazyListBinder { bind: row_binder },
+            ScrollOffset { x: Fixed::ZERO, y: Fixed::ZERO },
+            ScrollConfig {
+                direction: ScrollAxis::Vertical,
+                elastic: false,
+                content_height: Fixed::from_int(ROW_H * ITEM_COUNT as i32),
+                content_width: Fixed::ZERO,
+            }
+        ] {
+            walk 0..POOL_SIZE with _i {
+                row (
+                    bg_color: Color::rgb(40, 40, 56),
+                    text_color: Color::rgb(220, 220, 230),
+                    position: Position::Absolute,
+                    left: 0, top: 0,
+                    width: 128, height: ROW_H
+                ) {}
+            }
+        }
+    };
+    let pool: Vec<Entity> = app
+        .world
+        .get::<mirui::widget::Children>(list)
+        .map(|c| c.0.clone())
+        .unwrap_or_default();
     app.world.insert(list, LazyListPool::new(pool));
-    app.world.insert(list, LazyListBinder { bind: row_binder });
-    app.world.insert(
-        list,
-        ScrollOffset {
-            x: Fixed::ZERO,
-            y: Fixed::ZERO,
-        },
-    );
-    app.world.insert(
-        list,
-        ScrollConfig {
-            direction: ScrollAxis::Vertical,
-            elastic: false,
-            content_height: Fixed::from_int(ROW_H * ITEM_COUNT as i32),
-            content_width: Fixed::ZERO,
-        },
-    );
 
+    // Tab B: Slider centered in the page.
     mirui_macros::ui! {
         :(
             parent: root
             world: &mut app.world
         :)
 
-        slider_track (
-            bg_color: Color::rgb(60, 60, 80),
-            position: Position::Absolute,
-            left: 0,
-            top: 90,
-            width: 108,
-            height: 8,
-            border_radius: 4
+        slide_page (
+            bg_color: Color::rgb(28, 28, 40),
+            width: 128,
+            height: 114,
+            align: AlignItems::Center,
+            justify: JustifyContent::Center
         ) [
-            Slider::new(Fixed::ZERO, Fixed::from_int(100)),
-            GestureHandler { on_gesture: slider_handler }
+            TabContent { tab_bar: tabs, index: 1 }
         ] {
-            fill_mask (
-                width: 54,
+            slider_track (
+                bg_color: Color::rgb(60, 60, 80),
+                width: 108,
                 height: 8,
-                clip_children: true
-            ) {
-                fill_inner (
-                    bg_color: Color::rgb(88, 166, 255),
+                border_radius: 4
+            ) [
+                Slider::new(Fixed::ZERO, Fixed::from_int(100)),
+                GestureHandler { on_gesture: slider_handler }
+            ] {
+                fill_mask ( width: 54, height: 8, clip_children: true ) {
+                    fill_inner (
+                        bg_color: Color::rgb(88, 166, 255),
+                        position: Position::Absolute,
+                        left: 0, top: 0,
+                        width: 108, height: 8,
+                        border_radius: 4
+                    ) {}
+                }
+                thumb (
+                    bg_color: Color::rgb(255, 255, 255),
                     position: Position::Absolute,
-                    left: 0,
-                    top: 0,
-                    width: 108,
-                    height: 8,
+                    left: 49, top: 0,
+                    width: 8, height: 8,
                     border_radius: 4
                 ) {}
             }
-            thumb (
-                bg_color: Color::rgb(255, 255, 255),
-                position: Position::Absolute,
-                left: 49,
-                top: 0,
-                width: 8,
-                height: 8,
-                border_radius: 4
-            ) {}
         }
     };
+
+    // Tab C: Switch centered.
     mirui_macros::ui! {
         :(
             parent: root
             world: &mut app.world
         :)
 
-        switch_track (
-            bg_color: Color::rgb(80, 80, 100),
-            position: Position::Absolute,
-            left: 110,
-            top: 88,
-            width: 26,
-            height: 12,
-            border_radius: 6
+        switch_page (
+            bg_color: Color::rgb(28, 28, 40),
+            width: 128,
+            height: 114,
+            align: AlignItems::Center,
+            justify: JustifyContent::Center
         ) [
-            Switch::new(),
-            GestureHandler { on_gesture: switch_handler }
+            TabContent { tab_bar: tabs, index: 2 }
         ] {
-            sw_thumb (
-                bg_color: Color::rgb(255, 255, 255),
-                position: Position::Absolute,
-                left: 2,
-                top: 2,
-                width: 8,
-                height: 8,
-                border_radius: 4
-            ) {}
+            switch_track (
+                bg_color: Color::rgb(80, 80, 100),
+                width: 50,
+                height: 26,
+                border_radius: 13
+            ) [
+                Switch::new(),
+                GestureHandler { on_gesture: switch_handler }
+            ] {
+                sw_thumb (
+                    bg_color: Color::rgb(255, 255, 255),
+                    position: Position::Absolute,
+                    left: 2, top: 2,
+                    width: 22, height: 22,
+                    border_radius: 11
+                ) {}
+            }
         }
     };
 
+    // Sim playback: tap each tab so all three content pages get exercised
+    // over a single capture window. Coordinates land on the bar at y=7.
     app.world.insert_resource(
         SimTimeline::new(alloc::vec![
             SimAction::Wait(500),
-            SimAction::Tap(Point::new(20, 7)),  // tab A
-            SimAction::Wait(800),
-            SimAction::Tap(Point::new(64, 7)),  // tab B
-            SimAction::Wait(800),
-            SimAction::Tap(Point::new(108, 7)), // tab C
-            SimAction::Wait(800),
+            SimAction::Tap(Point::new(64, 7)),  // Slide
+            SimAction::Wait(1500),
             SimAction::Drag {
-                from: Point::new(2, 94),
-                to: Point::new(120, 94),
+                from: Point::new(10, 60),
+                to: Point::new(120, 60),
                 duration_ms: 600,
                 ease: ease::ease_in_out_cubic,
             },
-            SimAction::Wait(400),
-            SimAction::Drag {
-                from: Point::new(120, 94),
-                to: Point::new(2, 94),
-                duration_ms: 600,
-                ease: ease::ease_in_out_cubic,
-            },
-            SimAction::Wait(400),
-            SimAction::Drag {
-                from: Point::new(64, 80),
-                to: Point::new(64, 16),
-                duration_ms: 700,
-                ease: ease::ease_out_cubic,
-            },
             SimAction::Wait(800),
-            SimAction::Drag {
-                from: Point::new(64, 16),
-                to: Point::new(64, 80),
-                duration_ms: 700,
-                ease: ease::ease_out_cubic,
-            },
-            SimAction::Wait(400),
-            SimAction::Tap(Point::new(123, 94)), // toggle switch
+            SimAction::Tap(Point::new(108, 7)), // Sw
+            SimAction::Wait(1200),
+            SimAction::Tap(Point::new(64, 60)), // toggle switch
             SimAction::Wait(800),
-            SimAction::Tap(Point::new(123, 94)),
+            SimAction::Tap(Point::new(64, 60)),
+            SimAction::Wait(800),
+            SimAction::Tap(Point::new(20, 7)),  // List
             SimAction::Wait(1500),
         ])
         .looping(true),
