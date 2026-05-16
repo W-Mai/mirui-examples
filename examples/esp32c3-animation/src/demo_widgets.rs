@@ -18,7 +18,7 @@ use mirui::event::scroll::{ScrollAxis, ScrollConfig, ScrollOffset};
 use mirui::event::sim::{SimAction, SimTimeline, sim_timeline_system};
 use mirui::layout::*;
 use mirui::types::{Color, Dimension, Fixed, Point};
-use mirui::widget::Text;
+use mirui::components::text::Text;
 use mirui::widget::builder::WidgetBuilder;
 use mirui::widget::dirty::Dirty;
 
