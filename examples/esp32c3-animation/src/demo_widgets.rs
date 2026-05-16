@@ -2,14 +2,14 @@
 //!   tab A → LazyList (50 rows of 12 px)
 //!   tab B → Slider
 //!   tab C → Switch
-//! Tab indicator slide is mirui's built-in tab_view_system, not user code.
+//! Tab indicator slide is mirui's built-in tab_pages_system, not user code.
 
 use mirui::anim::{self, Tween, ease};
 use mirui::app::App;
 use mirui::components::lazy_list::{LazyList, LazyListBinder, LazyListPool, lazy_list_system};
 use mirui::components::slider::Slider;
 use mirui::components::switch::Switch;
-use mirui::components::tab_view::TabContent;
+use mirui::components::tab_pages::TabContent;
 use mirui::components::tabbar::TabBar;
 use mirui::ecs::{Entity, World};
 use mirui::event::GestureHandler;
