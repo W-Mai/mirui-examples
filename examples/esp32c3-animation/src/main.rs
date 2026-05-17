@@ -310,6 +310,9 @@ fn main() -> ! {
             flush_cb,
         );
 
+        #[cfg(feature = "demo-widgets")]
+        let mut app = App::new(backend).with_default_widgets();
+        #[cfg(not(feature = "demo-widgets"))]
         let mut app = App::new(backend);
 
         app.add_system(frame_counter_system);
