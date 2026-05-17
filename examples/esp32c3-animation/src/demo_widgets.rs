@@ -62,7 +62,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             width: 128,
             height: 14
         ) [
-            TabBar::new(3).with_indicator(Color::rgb(88, 166, 255), 2)
+            TabBar::new(3).with_indicator_height(2)
         ] {
             tab0 ( text: "List", text_color: Color::rgb(220, 220, 230),
                 grow: 1.0, align: AlignItems::Center, justify: JustifyContent::Center ) {}
