@@ -4,15 +4,19 @@ use mirui::ecs::World;
 use mirui::plugin::Plugin;
 use mirui::surface::Surface;
 
-use crate::board::systimer_now;
-
-const CPU_MHZ: u64 = 160;
-
-static mut CLOCK_START: u64 = 0;
-
+// esp_hal::time::Instant wraps after >7 years (uses the full 52-bit
+// systimer counter, not just the low 32 bits we read from CSR 0x7E2
+// in board::systimer_now). The previous implementation read CSR
+// systimer_low and treated u32 cycle wrap (every 26.8s @ 160 MHz) as
+// a normal monotonic clock, which is why anything past the first
+// 26.8s of runtime would jump backwards by ~26.8s and corrupt every
+// downstream elapsed-ms calculation (sim_timeline cycle drift,
+// animation tick clamp, gesture recognizer timing).
 fn esp_clock_ns() -> u64 {
-    let now = systimer_now() as u64;
-    unsafe { now.wrapping_sub(CLOCK_START).saturating_mul(1000) / CPU_MHZ }
+    let micros = esp_hal::time::Instant::now()
+        .duration_since_epoch()
+        .as_micros();
+    micros.saturating_mul(1000)
 }
 
 #[derive(Default)]
@@ -24,9 +28,6 @@ where
     F: RendererFactory<B>,
 {
     fn build(&mut self, app: &mut App<B, F>) {
-        unsafe {
-            CLOCK_START = systimer_now() as u64;
-        }
         app.world.insert_resource(MonoClock::new(esp_clock_ns));
     }
 }
