@@ -285,11 +285,20 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(
         (info.width as i32, info.height as i32)
     };
 
-    app.add_system(physics_tick_system);
-    app.add_system(kick_system);
-    app.add_system(sync_layout_system);
+    use mirui::ecs::{System, run_order};
+    app.add_system(System::new(
+        "physics_tick",
+        run_order::NORMAL,
+        physics_tick_system,
+    ));
+    app.add_system(System::new("kick", run_order::NORMAL, kick_system));
+    app.add_system(System::new(
+        "sync_layout",
+        run_order::NORMAL,
+        sync_layout_system,
+    ));
     #[cfg(feature = "spin")]
-    app.add_system(spin_system);
+    app.add_system(System::new("spin", run_order::ANIMATION, spin_system));
 
     let world = &mut app.world;
     world.insert_resource(PhysicsTime {

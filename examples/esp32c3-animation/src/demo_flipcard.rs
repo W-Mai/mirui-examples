@@ -67,7 +67,8 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
         (info.width as i32, info.height as i32)
     };
 
-    app.add_system(spin_system);
+    use mirui::ecs::{System, run_order};
+    app.add_system(System::new("spin", run_order::ANIMATION, spin_system));
 
     let world = &mut app.world;
 

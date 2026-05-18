@@ -109,8 +109,9 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
         (info.width as i32, info.height as i32)
     };
 
-    app.add_system(sway_system);
-    app.add_system(layout_system);
+    use mirui::ecs::{System, run_order};
+    app.add_system(System::new("sway", run_order::ANIMATION, sway_system));
+    app.add_system(System::new("layout", run_order::NORMAL, layout_system));
     app.world.insert_resource(SwayPhase(Fixed::ZERO));
     app.world.insert_resource(ScreenSize {
         w: logical_w,

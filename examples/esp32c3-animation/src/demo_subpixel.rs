@@ -31,7 +31,12 @@ fn bar_move_system(world: &mut World) {
 }
 
 pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
-    app.add_system(bar_move_system);
+    use mirui::ecs::{System, run_order};
+    app.add_system(System::new(
+        "bar_move",
+        run_order::ANIMATION,
+        bar_move_system,
+    ));
 
     let world = &mut app.world;
 

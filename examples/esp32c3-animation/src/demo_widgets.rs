@@ -33,7 +33,7 @@ use alloc::format;
 use alloc::vec::Vec;
 
 const ROW_H: i32 = 12;
-const POOL_SIZE: usize = 8;
+const POOL_SIZE: usize = 12;
 const ITEM_COUNT: u32 = 50;
 
 /// User-defined token. The "Theme" tab's lower colour block reads
@@ -117,9 +117,22 @@ mirui_macros::timer!(Cycle, every: 3_000, |world, entity| {
 });
 
 pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
-    app.add_system(lazy_list_system);
-    app.add_system(sim_timeline_system);
-    app.add_system(slider_to_progress_system);
+    use mirui::ecs::{System, run_order};
+    app.add_system(System::new(
+        "lazy_list",
+        run_order::LAZY_LIST,
+        lazy_list_system,
+    ));
+    app.add_system(System::new(
+        "sim_timeline",
+        run_order::SIM_INPUT,
+        sim_timeline_system,
+    ));
+    app.add_system(System::new(
+        "slider_to_progress",
+        run_order::NORMAL,
+        slider_to_progress_system,
+    ));
 
     app.world.insert_resource(dark_with_accent());
     let cycle_e = Cycle::install(&mut app.world);

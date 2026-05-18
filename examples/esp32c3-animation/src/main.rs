@@ -314,8 +314,13 @@ fn main() -> ! {
             .with_default_widgets()
             .with_default_systems();
 
-        app.add_system(frame_counter_system);
-        app.add_system(fps_system);
+        use mirui::ecs::{System, run_order};
+        app.add_system(System::new(
+            "frame_counter",
+            run_order::NORMAL,
+            frame_counter_system,
+        ));
+        app.add_system(System::new("fps", run_order::NORMAL, fps_system));
         app.world.insert_resource(FrameCounter(0));
         app.world.insert_resource(FpsState {
             count: 0,

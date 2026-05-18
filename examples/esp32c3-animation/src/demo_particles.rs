@@ -107,9 +107,18 @@ fn bar_system(world: &mut World) {
 }
 
 pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
-    app.add_system(particle_system);
-    app.add_system(pulse_ring_system);
-    app.add_system(bar_system);
+    use mirui::ecs::{System, run_order};
+    app.add_system(System::new(
+        "particle",
+        run_order::ANIMATION,
+        particle_system,
+    ));
+    app.add_system(System::new(
+        "pulse_ring",
+        run_order::ANIMATION,
+        pulse_ring_system,
+    ));
+    app.add_system(System::new("bar", run_order::ANIMATION, bar_system));
 
     let world = &mut app.world;
 

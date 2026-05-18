@@ -1,4 +1,4 @@
-use mirui::anim::{self, Spring, ease};
+use mirui::anim::{Spring, ease};
 use mirui::app::App;
 use mirui::components::slider::Slider;
 use mirui::components::switch::Switch;
@@ -134,10 +134,22 @@ fn switch_handler(world: &mut World, entity: Entity, event: &GestureEvent) -> bo
 }
 
 pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
-    app.add_system(anim::sync_delta_time_ms);
-    app.add_system(AnimateThumbX::system());
-    app.add_system(AnimateSwitchBgT::system());
-    app.add_system(sim_timeline_system);
+    use mirui::ecs::{System, run_order};
+    app.add_system(System::new(
+        "animate_thumb_x",
+        run_order::ANIMATION,
+        AnimateThumbX::system(),
+    ));
+    app.add_system(System::new(
+        "animate_switch_bg_t",
+        run_order::ANIMATION,
+        AnimateSwitchBgT::system(),
+    ));
+    app.add_system(System::new(
+        "sim_timeline",
+        run_order::SIM_INPUT,
+        sim_timeline_system,
+    ));
 
     let root = WidgetBuilder::new(&mut app.world)
         .bg_color(Color::rgb(30, 30, 46))
