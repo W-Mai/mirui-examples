@@ -1,4 +1,5 @@
-//! ESP showcase exercising mirui v0.14 ThemedColor:
+//! ESP showcase exercising mirui v0.14 ThemedColor and the v0.14.1
+//! `theme::set_theme` live-repaint API:
 //! - tab "List" → LazyList of 50 rows; rows use `Surface` /
 //!   `OnSurface` tokens.
 //! - tab "Form" → Switch + Slider + ProgressBar with the Slider
@@ -6,8 +7,8 @@
 //!   Every widget colour comes from its built-in default token.
 //! - tab "Theme" → two colour blocks (one for `Primary`, one for a
 //!   user-defined `accent` token). `theme_cycle_system` rotates
-//!   Dark / Light / Custom every 3 s; the whole UI repaints in the
-//!   new palette on the next frame.
+//!   Dark / Light / Custom every 3 s through one `theme::set_theme`
+//!   call; the whole UI repaints in the new palette next frame.
 
 use mirui::anim::{self, ease};
 use mirui::app::App;
@@ -25,7 +26,8 @@ use mirui::layout::*;
 use mirui::types::{Color, Dimension, Fixed, Point};
 use mirui::widget::builder::WidgetBuilder;
 use mirui::widget::dirty::Dirty;
-use mirui::widget::{Children, ColorToken, Theme};
+use mirui::widget::theme::{self, ColorToken};
+use mirui::widget::{Children, Theme};
 
 use alloc::format;
 use alloc::vec::Vec;
@@ -49,28 +51,24 @@ struct ThemeCycle {
 }
 
 fn dark_with_accent() -> Theme {
-    let mut t = Theme::dark();
-    t.set(ACCENT, Color::rgb(255, 200, 60));
-    t
+    Theme::dark().with(ACCENT, Color::rgb(255, 200, 60))
 }
 
 fn light_with_accent() -> Theme {
-    let mut t = Theme::light();
-    t.set(ACCENT, Color::rgb(220, 60, 90));
-    t
+    Theme::light().with(ACCENT, Color::rgb(220, 60, 90))
 }
 
 fn custom_theme() -> Theme {
-    let mut t = Theme::dark();
-    t.set(ColorToken::Primary, Color::rgb(255, 105, 180))
-        .set(ColorToken::OnPrimary, Color::rgb(20, 20, 30))
-        .set(ColorToken::Success, Color::rgb(255, 200, 60))
-        .set(ColorToken::Surface, Color::rgb(38, 28, 50))
-        .set(ColorToken::SurfaceVariant, Color::rgb(70, 50, 90))
-        .set(ColorToken::OnSurface, Color::rgb(245, 235, 255))
-        .set(ColorToken::OnSurfaceVariant, Color::rgb(180, 150, 200))
-        .set(ACCENT, Color::rgb(140, 200, 220));
-    t
+    Theme::dark().with_many([
+        (ColorToken::Primary, Color::rgb(255, 105, 180)),
+        (ColorToken::OnPrimary, Color::rgb(20, 20, 30)),
+        (ColorToken::Success, Color::rgb(255, 200, 60)),
+        (ColorToken::Surface, Color::rgb(38, 28, 50)),
+        (ColorToken::SurfaceVariant, Color::rgb(70, 50, 90)),
+        (ColorToken::OnSurface, Color::rgb(245, 235, 255)),
+        (ColorToken::OnSurfaceVariant, Color::rgb(180, 150, 200)),
+        (ACCENT, Color::rgb(140, 200, 220)),
+    ])
 }
 
 fn row_binder(world: &mut World, entity: Entity, index: u32) {
@@ -104,10 +102,6 @@ fn slider_to_progress_system(world: &mut World) {
     }
 }
 
-/// Cycle Theme every 3 s. The swap itself is one
-/// `world.insert_resource(theme)` call — Theme is a World resource
-/// like any other. The recursive `Dirty` walk is what tells the
-/// renderer to repaint widgets reading `ColorToken::*`.
 fn theme_cycle_system(world: &mut World) {
     let now_ms = match world.resource::<MonoClock>() {
         Some(c) => c.now_ms() as u64,
@@ -127,22 +121,7 @@ fn theme_cycle_system(world: &mut World) {
         1 => light_with_accent(),
         _ => custom_theme(),
     };
-    world.insert_resource(theme);
-    let roots: Vec<Entity> = world.query::<Children>().collect();
-    for r in roots {
-        mark_subtree_dirty(world, r);
-    }
-}
-
-fn mark_subtree_dirty(world: &mut World, entity: Entity) {
-    world.insert(entity, Dirty);
-    let children = world
-        .get::<Children>(entity)
-        .map(|c| c.0.clone())
-        .unwrap_or_default();
-    for c in children {
-        mark_subtree_dirty(world, c);
-    }
+    theme::set_theme(world, theme);
 }
 
 pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
