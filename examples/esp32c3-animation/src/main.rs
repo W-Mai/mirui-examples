@@ -311,7 +311,9 @@ fn main() -> ! {
         );
 
         #[cfg(feature = "demo-widgets")]
-        let mut app = App::new(backend).with_default_widgets();
+        let mut app = App::new(backend)
+            .with_default_widgets()
+            .with_default_systems();
         #[cfg(not(feature = "demo-widgets"))]
         let mut app = App::new(backend);
 

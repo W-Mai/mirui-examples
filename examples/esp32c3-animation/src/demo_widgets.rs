@@ -1,16 +1,16 @@
-//! ESP showcase exercising mirui v0.14 ThemedColor and the v0.14.1
-//! `theme::set_theme` live-repaint API:
+//! ESP showcase exercising mirui v0.14 ThemedColor + v0.14.1
+//! `theme::set_theme` + v0.14.2 `timer!` macro:
 //! - tab "List" → LazyList of 50 rows; rows use `Surface` /
 //!   `OnSurface` tokens.
 //! - tab "Form" → Switch + Slider + ProgressBar with the Slider
 //!   value pushed onto the ProgressBar by `slider_to_progress_system`.
 //!   Every widget colour comes from its built-in default token.
 //! - tab "Theme" → two colour blocks (one for `Primary`, one for a
-//!   user-defined `accent` token). `theme_cycle_system` rotates
-//!   Dark / Light / Custom every 3 s through one `theme::set_theme`
-//!   call; the whole UI repaints in the new palette next frame.
+//!   user-defined `accent` token). A `timer!`-generated `Cycle`
+//!   rotates Dark / Light / Custom every 3 s; the whole UI repaints
+//!   in the new palette next frame.
 
-use mirui::anim::{self, ease};
+use mirui::anim::ease;
 use mirui::app::App;
 use mirui::components::lazy_list::{LazyList, LazyListBinder, LazyListPool, lazy_list_system};
 use mirui::components::progress_bar::ProgressBar;
@@ -19,7 +19,7 @@ use mirui::components::switch::Switch;
 use mirui::components::tab_pages::TabContent;
 use mirui::components::tabbar::TabBar;
 use mirui::components::text::Text;
-use mirui::ecs::{Entity, MonoClock, World};
+use mirui::ecs::{Entity, World};
 use mirui::event::scroll::{ScrollAxis, ScrollConfig, ScrollOffset};
 use mirui::event::sim::{SimAction, SimTimeline, sim_timeline_system};
 use mirui::layout::*;
@@ -44,11 +44,9 @@ const ACCENT: ColorToken = ColorToken::custom("accent");
 struct FormSlider;
 struct FormProgress;
 
-/// State for `theme_cycle_system`: when to swap next, and which preset to swap to.
-struct ThemeCycle {
-    next_at_ms: u64,
-    index: u8,
-}
+/// Counter component on the cycle timer entity; the `timer!` callback
+/// reads it to pick the next preset.
+struct ThemeCycleIndex(u8);
 
 fn dark_with_accent() -> Theme {
     Theme::dark().with(ACCENT, Color::rgb(255, 200, 60))
@@ -102,41 +100,28 @@ fn slider_to_progress_system(world: &mut World) {
     }
 }
 
-fn theme_cycle_system(world: &mut World) {
-    let now_ms = match world.resource::<MonoClock>() {
-        Some(c) => c.now_ms() as u64,
-        None => return,
-    };
-    let mut should_swap = None;
-    if let Some(cycle) = world.resource_mut::<ThemeCycle>() {
-        if now_ms >= cycle.next_at_ms {
-            cycle.next_at_ms = now_ms + 3_000;
-            cycle.index = (cycle.index + 1) % 3;
-            should_swap = Some(cycle.index);
-        }
-    }
-    let Some(idx) = should_swap else { return };
-    let theme = match idx {
+mirui_macros::timer!(Cycle, every: 3_000, |world, entity| {
+    let next = world
+        .get::<ThemeCycleIndex>(entity)
+        .map(|i| (i.0 + 1) % 3)
+        .unwrap_or(0);
+    world.insert(entity, ThemeCycleIndex(next));
+    let theme = match next {
         0 => dark_with_accent(),
         1 => light_with_accent(),
         _ => custom_theme(),
     };
     theme::set_theme(world, theme);
-}
+});
 
 pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
-    app.add_system(anim::sync_delta_time_ms);
     app.add_system(lazy_list_system);
     app.add_system(sim_timeline_system);
     app.add_system(slider_to_progress_system);
-    app.add_system(theme_cycle_system);
 
-    // Start with the dark palette + accent token bound.
     app.world.insert_resource(dark_with_accent());
-    app.world.insert_resource(ThemeCycle {
-        next_at_ms: 3_000,
-        index: 0,
-    });
+    let cycle_e = Cycle::install(&mut app.world);
+    app.world.insert(cycle_e, ThemeCycleIndex(0));
 
     let root = WidgetBuilder::new(&mut app.world)
         .bg_color(ColorToken::Surface)
