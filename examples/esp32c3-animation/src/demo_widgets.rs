@@ -23,7 +23,7 @@ use mirui::ecs::{Entity, World};
 use mirui::event::scroll::{ScrollAxis, ScrollConfig, ScrollOffset};
 use mirui::event::sim::{SimAction, SimTimeline, sim_timeline_system};
 use mirui::layout::*;
-use mirui::types::{Color, Dimension, Fixed, Point};
+use mirui::types::{Color, DimPoint, Dimension, Fixed};
 use mirui::widget::builder::WidgetBuilder;
 use mirui::widget::dirty::Dirty;
 use mirui::widget::theme::{self, ColorToken};
@@ -47,6 +47,8 @@ struct FormProgress;
 /// Counter component on the cycle timer entity; the `timer!` callback
 /// reads it to pick the next preset.
 struct ThemeCycleIndex(u8);
+
+
 
 fn dark_with_accent() -> Theme {
     Theme::dark().with(ACCENT, Color::rgb(255, 200, 60))
@@ -134,47 +136,80 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
         .id();
 
     let tabs = mirui_macros::ui! {
-        :( parent: root world: &mut app.world :)
+        :(
+            parent: root
+            world: &mut app.world
+        :)
+
         tabs (
             bg_color: ColorToken::SurfaceVariant,
-            width: 128, height: 14
+            width: 128,
+            height: 14
         ) [
-            TabBar::new(3).with_indicator_height(2)
+            TabBar::new(3).with_indicator_height(2),
         ] {
-            tab0 (text: "List", text_color: ColorToken::OnSurface,
-                grow: 1.0, align: AlignItems::Center, justify: JustifyContent::Center) {}
-            tab1 (text: "Form", text_color: ColorToken::OnSurface,
-                grow: 1.0, align: AlignItems::Center, justify: JustifyContent::Center) {}
-            tab2 (text: "Thm", text_color: ColorToken::OnSurface,
-                grow: 1.0, align: AlignItems::Center, justify: JustifyContent::Center) {}
+            tab0 (
+                text: "List",
+                text_color: ColorToken::OnSurface,
+                grow: 1.0,
+                align: AlignItems::Center,
+                justify: JustifyContent::Center
+            ) {}
+            tab1 (
+                text: "Form",
+                text_color: ColorToken::OnSurface,
+                grow: 1.0,
+                align: AlignItems::Center,
+                justify: JustifyContent::Center
+            ) {}
+            tab2 (
+                text: "Thm",
+                text_color: ColorToken::OnSurface,
+                grow: 1.0,
+                align: AlignItems::Center,
+                justify: JustifyContent::Center
+            ) {}
         }
     };
 
     // Tab A: LazyList of 50 rows.
     let list = mirui_macros::ui! {
-        :( parent: root world: &mut app.world :)
+        :(
+            parent: root
+            world: &mut app.world
+        :)
+
         list (
             bg_color: ColorToken::Surface,
-            width: 128, height: 114
+            width: 128,
+            height: 114
         ) [
-            TabContent { tab_bar: tabs, index: 0 },
+            TabContent {
+                tab_bar: tabs,
+                index: 0,
+            },
             LazyList::new(ITEM_COUNT, ROW_H, POOL_SIZE as u8),
             LazyListBinder { bind: row_binder },
-            ScrollOffset { x: Fixed::ZERO, y: Fixed::ZERO },
+            ScrollOffset {
+                x: Fixed::ZERO,
+                y: Fixed::ZERO,
+            },
             ScrollConfig {
                 direction: ScrollAxis::Vertical,
                 elastic: false,
                 content_height: Fixed::from_int(ROW_H * ITEM_COUNT as i32),
                 content_width: Fixed::ZERO,
-            }
+            },
         ] {
             walk 0..POOL_SIZE with _i {
                 row (
                     bg_color: ColorToken::SurfaceVariant,
                     text_color: ColorToken::OnSurface,
                     position: Position::Absolute,
-                    left: 0, top: 0,
-                    width: 128, height: ROW_H
+                    left: 0,
+                    top: 0,
+                    width: 128,
+                    height: ROW_H
                 ) {}
             }
         }
@@ -188,27 +223,52 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
 
     // Tab B: Form — Switch + Slider + ProgressBar.
     mirui_macros::ui! {
-        :( parent: root world: &mut app.world :)
+        :(
+            parent: root
+            world: &mut app.world
+        :)
+
         form_page (
             bg_color: ColorToken::Surface,
-            width: 128, height: 114,
+            width: 128,
+            height: 114,
             direction: FlexDirection::Column,
             padding: Padding::all(10)
-        ) [ TabContent { tab_bar: tabs, index: 1 } ] {
+        ) [
+            TabContent {
+                tab_bar: tabs,
+                index: 1,
+            },
+        ] {
             enable_row (
                 direction: FlexDirection::Row,
-                height: 28, align: AlignItems::Center
+                height: 28,
+                align: AlignItems::Center
             ) {
                 enable_label (text: "Enable", text_color: ColorToken::OnSurface, grow: 1.0) {}
-                enable_switch (width: 40, height: 20) [ Switch::new() ] {}
+                enable_switch (width: 40, height: 20) [
+                    Switch::new(),
+                ] {}
             }
-            slider_row (height: 14, padding: Padding { top: Dimension::px(6), ..Default::default() }) {
+            slider_row (
+                height: 14,
+                padding: Padding {
+                    top: Dimension::px(6),
+                    ..Default::default()
+                }
+            ) {
                 value_slider (width: 108, height: 14) [
                     Slider::new(Fixed::ZERO, Fixed::from_int(100)),
                     FormSlider,
                 ] {}
             }
-            progress_row (height: 10, padding: Padding { top: Dimension::px(8), ..Default::default() }) {
+            progress_row (
+                height: 10,
+                padding: Padding {
+                    top: Dimension::px(8),
+                    ..Default::default()
+                }
+            ) {
                 value_progress (width: 108, height: 8, border_radius: 4) [
                     ProgressBar::new(),
                     FormProgress,
@@ -221,64 +281,98 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
     // Both blocks repaint when theme_cycle_system rotates the
     // active Theme resource.
     mirui_macros::ui! {
-        :( parent: root world: &mut app.world :)
+        :(
+            parent: root
+            world: &mut app.world
+        :)
+
         theme_page (
             bg_color: ColorToken::Surface,
-            width: 128, height: 114,
+            width: 128,
+            height: 114,
             direction: FlexDirection::Column,
             padding: Padding::all(12),
             align: AlignItems::Center
-        ) [ TabContent { tab_bar: tabs, index: 2 } ] {
+        ) [
+            TabContent {
+                tab_bar: tabs,
+                index: 2,
+            },
+        ] {
             primary_label (text: "Primary", text_color: ColorToken::OnSurface, height: 14) {}
             primary_block (width: 80, height: 18, bg_color: ColorToken::Primary, border_radius: 4) {}
             accent_label (
                 text: "accent (custom)",
                 text_color: ColorToken::OnSurfaceVariant,
-                height: 12, padding: Padding { top: Dimension::px(8), ..Default::default() }
+                height: 12,
+                padding: Padding {
+                    top: Dimension::px(8),
+                    ..Default::default()
+                }
             ) {}
             accent_block (width: 80, height: 18, bg_color: ACCENT, border_radius: 4) {}
         }
     };
 
-    // Sim playback: walk through the three tabs and exercise each.
-    // Theme cycles independently every 3 s via theme_cycle_system.
+    let tab_kids = app
+        .world
+        .get::<Children>(tabs)
+        .map(|c| c.0.clone())
+        .unwrap_or_default();
+    let (tab_list, tab_form, tab_theme) = (tab_kids[0], tab_kids[1], tab_kids[2]);
+    let switch_e = *app
+        .world
+        .query::<Switch>()
+        .collect()
+        .first()
+        .expect("form Switch must be installed");
+    let slider_e = *app
+        .world
+        .query::<Slider>()
+        .collect()
+        .first()
+        .expect("form Slider must be installed");
+
+
+    let list_drag_anchor = list;
+
     app.world.insert_resource(
         SimTimeline::new(alloc::vec![
-            // Form tab: toggle Switch on, drag Slider, watch Progress fill.
-            SimAction::Wait(500),
-            SimAction::Tap(Point::new(64, 7)),  // Form
-            SimAction::Wait(800),
-            SimAction::Tap(Point::new(105, 28)), // Switch on
-            SimAction::Wait(800),
-            SimAction::Drag {
-                from: Point::new(14, 60),
-                to: Point::new(116, 60),
-                duration_ms: 600,
-                ease: ease::ease_in_out_cubic,
-            },
-            SimAction::Wait(800),
-            SimAction::Tap(Point::new(105, 28)), // Switch off (disabled look)
-            SimAction::Wait(1500),
-            // Theme tab: just sit there while theme_cycle_system rotates.
-            SimAction::Tap(Point::new(108, 7)),
-            SimAction::Wait(6500),
-            // List tab: scroll up/down.
-            SimAction::Tap(Point::new(20, 7)),
-            SimAction::Wait(800),
-            SimAction::Drag {
-                from: Point::new(64, 100),
-                to: Point::new(64, 30),
-                duration_ms: 700,
-                ease: ease::ease_in_out_cubic,
-            },
-            SimAction::Wait(800),
-            SimAction::Drag {
-                from: Point::new(64, 30),
-                to: Point::new(64, 100),
-                duration_ms: 700,
-                ease: ease::ease_in_out_cubic,
-            },
-            SimAction::Wait(800),
+            SimAction::wait(500),
+            SimAction::tap(DimPoint::CENTER).on(tab_form),
+            SimAction::wait(800),
+            SimAction::tap(DimPoint::CENTER).on(switch_e),
+            SimAction::wait(800),
+            SimAction::drag(
+                DimPoint::percent(10, 50),
+                DimPoint::percent(90, 50),
+                600,
+                ease::ease_in_out_cubic,
+            )
+            .on(slider_e),
+            SimAction::wait(800),
+            SimAction::tap(DimPoint::CENTER).on(switch_e),
+            SimAction::wait(1500),
+            SimAction::tap(DimPoint::CENTER).on(tab_theme),
+            SimAction::wait(6500),
+            SimAction::tap(DimPoint::CENTER).on(tab_list),
+            SimAction::wait(800),
+            SimAction::drag(
+                DimPoint::percent(50, 80),
+                DimPoint::percent(50, 20),
+                700,
+                ease::ease_in_out_cubic,
+            )
+            .on(list_drag_anchor),
+            SimAction::wait(800),
+            SimAction::drag(
+                DimPoint::percent(50, 20),
+                DimPoint::percent(50, 80),
+                700,
+                ease::ease_in_out_cubic,
+            )
+            .on(list_drag_anchor),
+            SimAction::wait(800),
         ])
         .looping(true),
     );
