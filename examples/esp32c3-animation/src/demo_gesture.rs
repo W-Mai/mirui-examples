@@ -10,6 +10,7 @@ use mirui::layout::*;
 use mirui::types::{Color, Dimension, Fixed, Point};
 use mirui::widget::builder::WidgetBuilder;
 use mirui::widget::dirty::Dirty;
+use mirui::widget::theme::{Theme, ThemedColor};
 
 use alloc::vec::Vec;
 
@@ -23,11 +24,15 @@ mirui_macros::animate!(AnimateSwitchBgT, |world, entity, value| {
     let Some(sw) = world.get::<Switch>(entity) else {
         return;
     };
-    let off = sw.off_color;
-    let on = sw.on_color;
+    let theme = world
+        .resource::<Theme>()
+        .cloned()
+        .unwrap_or_else(Theme::dark);
+    let off = sw.off_color.resolve(&theme);
+    let on = sw.on_color.resolve(&theme);
     let color = Color::lerp(off, on, value);
     if let Some(style) = world.get_mut::<mirui::widget::Style>(entity) {
-        style.bg_color = Some(color);
+        style.bg_color = Some(ThemedColor::Raw(color));
     }
     world.insert(entity, Dirty);
 });
@@ -256,24 +261,24 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
     // is fine — gesture targets latch on PointerDown).
     app.world.insert_resource(
         SimTimeline::new(alloc::vec![
-            SimAction::Drag {
-                from: Point::new(10, 15),
-                to: Point::new(120, 15),
-                duration_ms: 500,
-                ease: ease::ease_in_out_cubic,
-            },
-            SimAction::Wait(1000),
-            SimAction::Tap(Point::new(27, 50)),
-            SimAction::Wait(1000),
-            SimAction::Drag {
-                from: Point::new(117, 15),
-                to: Point::new(8, 15),
-                duration_ms: 300,
-                ease: ease::ease_in_out_cubic,
-            },
-            SimAction::Wait(1000),
-            SimAction::Tap(Point::new(27, 50)),
-            SimAction::Wait(1000),
+            SimAction::drag(
+                Point::new(10, 15),
+                Point::new(120, 15),
+                500,
+                ease::ease_in_out_cubic,
+            ),
+            SimAction::wait(1000),
+            SimAction::tap(Point::new(27, 50)),
+            SimAction::wait(1000),
+            SimAction::drag(
+                Point::new(117, 15),
+                Point::new(8, 15),
+                300,
+                ease::ease_in_out_cubic,
+            ),
+            SimAction::wait(1000),
+            SimAction::tap(Point::new(27, 50)),
+            SimAction::wait(1000),
         ])
         .looping(true),
     );
