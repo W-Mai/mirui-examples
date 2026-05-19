@@ -67,6 +67,7 @@ fn isqrt(n: u32) -> u32 {
     x
 }
 
+#[mirui::system]
 fn physics_tick_system(world: &mut World) {
     let now = systimer_now();
     let (steps,) = {
@@ -209,6 +210,7 @@ fn three_body_step(world: &mut World) {
     }
 }
 
+#[mirui::system]
 fn kick_system(world: &mut World) {
     let fc = world
         .resource::<crate::FrameCounter>()
@@ -233,6 +235,7 @@ fn kick_system(world: &mut World) {
 }
 
 #[cfg(feature = "spin")]
+#[mirui::system(order = ANIMATION)]
 fn spin_system(world: &mut World) {
     // Advance every spinning body's angle by a small step per frame.
     // Wrap at 360° to keep the Fixed value bounded so `cos_deg` /
@@ -257,6 +260,7 @@ fn spin_system(world: &mut World) {
     }
 }
 
+#[mirui::system]
 fn sync_layout_system(world: &mut World) {
     let half_w = Fixed::from_int(IMG_THUMBS_UP.width as i32 / 2);
     let half_h = Fixed::from_int(IMG_THUMBS_UP.height as i32 / 2);
@@ -285,20 +289,11 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(
         (info.width as i32, info.height as i32)
     };
 
-    use mirui::ecs::{System, run_order};
-    app.add_system(System::new(
-        "physics_tick",
-        run_order::NORMAL,
-        physics_tick_system,
-    ));
-    app.add_system(System::new("kick", run_order::NORMAL, kick_system));
-    app.add_system(System::new(
-        "sync_layout",
-        run_order::NORMAL,
-        sync_layout_system,
-    ));
+    app.add_system(physics_tick_system::system());
+    app.add_system(kick_system::system());
+    app.add_system(sync_layout_system::system());
     #[cfg(feature = "spin")]
-    app.add_system(System::new("spin", run_order::ANIMATION, spin_system));
+    app.add_system(spin_system::system());
 
     let world = &mut app.world;
     world.insert_resource(PhysicsTime {

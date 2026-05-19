@@ -12,7 +12,7 @@
 
 use mirui::anim::ease;
 use mirui::app::App;
-use mirui::components::lazy_list::{LazyList, LazyListBinder, LazyListPool, lazy_list_system};
+use mirui::components::lazy_list::{LazyList, LazyListBinder, LazyListPool};
 use mirui::components::progress_bar::ProgressBar;
 use mirui::components::slider::Slider;
 use mirui::components::switch::Switch;
@@ -82,6 +82,7 @@ fn row_binder(world: &mut World, entity: Entity, index: u32) {
 
 /// Push Slider.value → ProgressBar.value every frame. Demonstrates
 /// runtime state coupling without going through gesture handlers.
+#[mirui::system]
 fn slider_to_progress_system(world: &mut World) {
     let sliders: Vec<Entity> = world.query::<FormSlider>().collect();
     let mut value = None;
@@ -117,22 +118,8 @@ mirui_macros::timer!(Cycle, every: 3_000, |world, entity| {
 });
 
 pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
-    use mirui::ecs::{System, run_order};
-    app.add_system(System::new(
-        "lazy_list",
-        run_order::LAZY_LIST,
-        lazy_list_system,
-    ));
-    app.add_system(System::new(
-        "sim_timeline",
-        run_order::SIM_INPUT,
-        sim_timeline_system,
-    ));
-    app.add_system(System::new(
-        "slider_to_progress",
-        run_order::NORMAL,
-        slider_to_progress_system,
-    ));
+    app.add_system(sim_timeline_system::system());
+    app.add_system(slider_to_progress_system::system());
 
     app.world.insert_resource(dark_with_accent());
     let cycle_e = Cycle::install(&mut app.world);

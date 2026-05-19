@@ -30,6 +30,7 @@ struct BouncingBar {
     vertical: bool,
 }
 
+#[mirui::system(order = ANIMATION)]
 fn particle_system(world: &mut World) {
     let mut buf = Vec::new();
     world.query::<Particle>().collect_into(&mut buf);
@@ -55,6 +56,7 @@ fn particle_system(world: &mut World) {
     }
 }
 
+#[mirui::system(order = ANIMATION)]
 fn pulse_ring_system(world: &mut World) {
     let mut buf = Vec::new();
     world.query::<PulseRing>().collect_into(&mut buf);
@@ -80,6 +82,7 @@ fn pulse_ring_system(world: &mut World) {
     }
 }
 
+#[mirui::system(order = ANIMATION)]
 fn bar_system(world: &mut World) {
     let mut buf = Vec::new();
     world.query::<BouncingBar>().collect_into(&mut buf);
@@ -107,18 +110,9 @@ fn bar_system(world: &mut World) {
 }
 
 pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
-    use mirui::ecs::{System, run_order};
-    app.add_system(System::new(
-        "particle",
-        run_order::ANIMATION,
-        particle_system,
-    ));
-    app.add_system(System::new(
-        "pulse_ring",
-        run_order::ANIMATION,
-        pulse_ring_system,
-    ));
-    app.add_system(System::new("bar", run_order::ANIMATION, bar_system));
+    app.add_system(particle_system::system());
+    app.add_system(pulse_ring_system::system());
+    app.add_system(bar_system::system());
 
     let world = &mut app.world;
 

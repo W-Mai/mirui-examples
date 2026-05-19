@@ -28,6 +28,7 @@ struct ScreenSize {
     h: i32,
 }
 
+#[mirui::system(order = ANIMATION)]
 fn sway_system(world: &mut World) {
     let phase = {
         let Some(p) = world.resource_mut::<SwayPhase>() else {
@@ -57,6 +58,7 @@ fn sway_system(world: &mut World) {
     }
 }
 
+#[mirui::system]
 fn layout_system(world: &mut World) {
     let mut carousels = alloc::vec::Vec::new();
     world.query::<Carousel>().collect_into(&mut carousels);
@@ -109,9 +111,8 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
         (info.width as i32, info.height as i32)
     };
 
-    use mirui::ecs::{System, run_order};
-    app.add_system(System::new("sway", run_order::ANIMATION, sway_system));
-    app.add_system(System::new("layout", run_order::NORMAL, layout_system));
+    app.add_system(sway_system::system());
+    app.add_system(layout_system::system());
     app.world.insert_resource(SwayPhase(Fixed::ZERO));
     app.world.insert_resource(ScreenSize {
         w: logical_w,

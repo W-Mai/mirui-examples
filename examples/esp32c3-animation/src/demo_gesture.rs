@@ -150,11 +150,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
         run_order::ANIMATION,
         AnimateSwitchBgT::system(),
     ));
-    app.add_system(System::new(
-        "sim_timeline",
-        run_order::SIM_INPUT,
-        sim_timeline_system,
-    ));
+    app.add_system(sim_timeline_system::system());
 
     let root = WidgetBuilder::new(&mut app.world)
         .bg_color(Color::rgb(30, 30, 46))

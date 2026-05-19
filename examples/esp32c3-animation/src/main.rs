@@ -108,6 +108,7 @@ struct FpsState {
 }
 
 #[cfg(feature = "app-demo")]
+#[mirui::system]
 fn frame_counter_system(world: &mut World) {
     if let Some(fc) = world.resource_mut::<FrameCounter>() {
         fc.0 = fc.0.wrapping_add(1);
@@ -115,6 +116,7 @@ fn frame_counter_system(world: &mut World) {
 }
 
 #[cfg(feature = "app-demo")]
+#[mirui::system]
 fn fps_system(world: &mut World) {
     let now = systimer_now();
     let Some(fps) = world.resource_mut::<FpsState>() else {
@@ -314,13 +316,8 @@ fn main() -> ! {
             .with_default_widgets()
             .with_default_systems();
 
-        use mirui::ecs::{System, run_order};
-        app.add_system(System::new(
-            "frame_counter",
-            run_order::NORMAL,
-            frame_counter_system,
-        ));
-        app.add_system(System::new("fps", run_order::NORMAL, fps_system));
+        app.add_system(frame_counter_system::system());
+        app.add_system(fps_system::system());
         app.world.insert_resource(FrameCounter(0));
         app.world.insert_resource(FpsState {
             count: 0,

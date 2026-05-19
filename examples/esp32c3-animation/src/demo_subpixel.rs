@@ -9,6 +9,7 @@ use crate::board::{H, W};
 
 struct BarState { y: Fixed, speed: Fixed, snap: bool, x: Fixed }
 
+#[mirui::system(order = ANIMATION)]
 fn bar_move_system(world: &mut World) {
     let mut buf = Vec::new();
     world.query::<BarState>().collect_into(&mut buf);
@@ -31,12 +32,7 @@ fn bar_move_system(world: &mut World) {
 }
 
 pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
-    use mirui::ecs::{System, run_order};
-    app.add_system(System::new(
-        "bar_move",
-        run_order::ANIMATION,
-        bar_move_system,
-    ));
+    app.add_system(bar_move_system::system());
 
     let world = &mut app.world;
 

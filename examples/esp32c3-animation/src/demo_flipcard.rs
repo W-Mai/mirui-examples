@@ -16,6 +16,7 @@ struct Spinner {
     bounce_phase: Fixed,
 }
 
+#[mirui::system(order = ANIMATION)]
 fn spin_system(world: &mut World) {
     let mut entities = Vec::new();
     world.query::<Spinner>().collect_into(&mut entities);
@@ -67,8 +68,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
         (info.width as i32, info.height as i32)
     };
 
-    use mirui::ecs::{System, run_order};
-    app.add_system(System::new("spin", run_order::ANIMATION, spin_system));
+    app.add_system(spin_system::system());
 
     let world = &mut app.world;
 
