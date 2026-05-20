@@ -820,7 +820,7 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "mirui"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "mirui-macros",
 ]
@@ -840,7 +840,7 @@ dependencies = [
 
 [[package]]
 name = "mirui-macros"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "proc-macro2",
  "quote",
