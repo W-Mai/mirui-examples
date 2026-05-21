@@ -312,9 +312,8 @@ fn main() -> ! {
             flush_cb,
         );
 
-        let mut app = App::new(backend)
-            .with_default_widgets()
-            .with_default_systems();
+        let mut app = App::new(backend);
+        app.with_default_widgets().with_default_systems();
 
         app.add_system(frame_counter_system::system());
         app.add_system(fps_system::system());
