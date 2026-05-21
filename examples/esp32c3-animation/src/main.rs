@@ -101,7 +101,7 @@ pub struct FrameCounter(pub u32);
 #[cfg(feature = "app-demo")]
 struct FpsState {
     count: u32,
-    last_tick: u32,
+    last_tick: u64,
     display: u32,
 }
 
@@ -116,15 +116,21 @@ fn frame_counter_system(world: &mut World) {
 #[cfg(feature = "app-demo")]
 #[mirui::system]
 fn fps_system(world: &mut World) {
-    let now = systimer_now();
+    // esp_hal Instant — same clock the App's MonoClock reads, so fps
+    // numbers agree with [perf]. systimer_now (csr 0x7E2) was a
+    // vendor-specific counter with a clock frequency we can't trust.
+    let now_us = esp_hal::time::Instant::now()
+        .duration_since_epoch()
+        .as_micros();
     let Some(fps) = world.resource_mut::<FpsState>() else {
         return;
     };
     fps.count += 1;
-    if now.wrapping_sub(fps.last_tick) >= 160_000_000 {
+    // 1 second = 1_000_000 us
+    if now_us.wrapping_sub(fps.last_tick) >= 1_000_000 {
         fps.display = fps.count;
         fps.count = 0;
-        fps.last_tick = now;
+        fps.last_tick = now_us;
         #[cfg(feature = "fps-overlay")]
         unsafe {
             FPS_DISPLAY = fps.display;
@@ -318,7 +324,9 @@ fn main() -> ! {
         app.world.insert_resource(FrameCounter(0));
         app.world.insert_resource(FpsState {
             count: 0,
-            last_tick: systimer_now(),
+            last_tick: esp_hal::time::Instant::now()
+                .duration_since_epoch()
+                .as_micros(),
             display: 0,
         });
 

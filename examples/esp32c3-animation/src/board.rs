@@ -113,6 +113,11 @@ pub fn delay_ms(ms: u32) {
     }
 }
 
+/// Vendor-specific CSR 0x7E2 — clock frequency assumption was wrong
+/// historically (assumed 160 MHz). Use `esp_hal::time::Instant::now()`
+/// for any wall-clock measurement that must agree with `MonoClock`.
+/// Kept for legacy demos that compare deltas (relative monotonic
+/// counter, not absolute time).
 pub fn systimer_now() -> u32 {
     let val: u32;
     unsafe { core::arch::asm!("csrr {}, 0x7E2", out(reg) val) };

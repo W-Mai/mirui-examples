@@ -35,7 +35,13 @@ where
 pub struct EspPerfSummaryPlugin {
     frames_per_summary: u32,
     frame_count: u32,
+    frame_ns_total: u64,
+    event_ns_total: u64,
+    systems_ns_total: u64,
+    layout_ns_total: u64,
     render_ns_total: u64,
+    flush_ns_total: u64,
+    seed_prev_ns_total: u64,
 }
 
 impl EspPerfSummaryPlugin {
@@ -43,7 +49,13 @@ impl EspPerfSummaryPlugin {
         Self {
             frames_per_summary,
             frame_count: 0,
+            frame_ns_total: 0,
+            event_ns_total: 0,
+            systems_ns_total: 0,
+            layout_ns_total: 0,
             render_ns_total: 0,
+            flush_ns_total: 0,
+            seed_prev_ns_total: 0,
         }
     }
 }
@@ -61,18 +73,42 @@ where
 {
     fn build(&mut self, _app: &mut App<B, F>) {}
 
-    fn post_render(&mut self, _world: &mut World, render_nanos: u64) {
+    fn post_render(&mut self, world: &mut World, _render_nanos: u64) {
+        // post_render fires once per render() / render_dirty() call.
+        // The first one (before App::run starts looping) won't have
+        // FrameTimings yet, so guard.
+        let Some(t) = world.resource::<mirui::ecs::FrameTimings>() else {
+            return;
+        };
         self.frame_count += 1;
-        self.render_ns_total += render_nanos;
+        self.frame_ns_total += t.frame_nanos;
+        self.event_ns_total += t.event_poll_nanos;
+        self.systems_ns_total += t.systems_nanos;
+        self.layout_ns_total += t.layout_nanos;
+        self.render_ns_total += t.render_nanos;
+        self.flush_ns_total += t.flush_nanos;
+        self.seed_prev_ns_total += t.seed_prev_nanos;
         if self.frame_count >= self.frames_per_summary {
-            let avg_us = self.render_ns_total / self.frame_count as u64 / 1000;
+            let avg = |total: u64| total / self.frame_count as u64 / 1000;
             esp_println::println!(
-                "[perf] {} frames, avg render {} us",
+                "[perf] {} frames | frame {}us = event {} + systems {} + layout {} + render {} + flush {} + seed {}",
                 self.frame_count,
-                avg_us
+                avg(self.frame_ns_total),
+                avg(self.event_ns_total),
+                avg(self.systems_ns_total),
+                avg(self.layout_ns_total),
+                avg(self.render_ns_total),
+                avg(self.flush_ns_total),
+                avg(self.seed_prev_ns_total),
             );
             self.frame_count = 0;
+            self.frame_ns_total = 0;
+            self.event_ns_total = 0;
+            self.systems_ns_total = 0;
+            self.layout_ns_total = 0;
             self.render_ns_total = 0;
+            self.flush_ns_total = 0;
+            self.seed_prev_ns_total = 0;
         }
     }
 }
