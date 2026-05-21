@@ -85,10 +85,10 @@ fn b64_encode(input: &[u8], out: &mut [u8]) -> usize {
     o
 }
 
-// Latest FPS value (one-second window). Single-writer on single-core
-// RV32 with no reentrancy, so `static mut` is safe here.
+// Latest FPS value computed by FpsSummaryPlugin's sink each summary
+// window. Single-writer on single-core RV32 with no reentrancy.
 #[cfg(feature = "fps-overlay")]
-static mut FPS_DISPLAY: u32 = 0;
+pub static mut FPS_DISPLAY: u32 = 0;
 
 // Cumulative flush time within each 1-second report window; only the
 // App-based demos maintain this, shapes/butterfly don't need it.
@@ -99,61 +99,10 @@ static mut FLUSH_ACC: u32 = 0;
 pub struct FrameCounter(pub u32);
 
 #[cfg(feature = "app-demo")]
-struct FpsState {
-    count: u32,
-    last_tick: u64,
-    display: u32,
-}
-
-#[cfg(feature = "app-demo")]
 #[mirui::system]
 fn frame_counter_system(world: &mut World) {
     if let Some(fc) = world.resource_mut::<FrameCounter>() {
         fc.0 = fc.0.wrapping_add(1);
-    }
-}
-
-#[cfg(feature = "app-demo")]
-#[mirui::system]
-fn fps_system(world: &mut World) {
-    // esp_hal Instant — same clock the App's MonoClock reads, so fps
-    // numbers agree with [perf]. systimer_now (csr 0x7E2) was a
-    // vendor-specific counter with a clock frequency we can't trust.
-    let now_us = esp_hal::time::Instant::now()
-        .duration_since_epoch()
-        .as_micros();
-    let Some(fps) = world.resource_mut::<FpsState>() else {
-        return;
-    };
-    fps.count += 1;
-    // 1 second = 1_000_000 us
-    if now_us.wrapping_sub(fps.last_tick) >= 1_000_000 {
-        fps.display = fps.count;
-        fps.count = 0;
-        fps.last_tick = now_us;
-        #[cfg(feature = "fps-overlay")]
-        unsafe {
-            FPS_DISPLAY = fps.display;
-        }
-        let s = mirui::draw::quad_perf::take();
-        let fill_us = s.fill_ticks / 160;
-        let blit_us = s.blit_ticks / 160;
-        esp_println::println!(
-            "[quad] fill: {} calls {} us ({} px scan / {} draw / inset_hit {} / slow_hit {})",
-            s.fill_count,
-            fill_us,
-            s.fill_scanned,
-            s.fill_drawn,
-            s.fill_inset_hit,
-            s.fill_slow_hit
-        );
-        esp_println::println!(
-            "[quad] blit: {} calls {} us ({} px scan / {} draw)",
-            s.blit_count,
-            blit_us,
-            s.blit_scanned,
-            s.blit_drawn
-        );
     }
 }
 
@@ -320,15 +269,7 @@ fn main() -> ! {
         app.with_default_widgets().with_default_systems();
 
         app.add_system(frame_counter_system::system());
-        app.add_system(fps_system::system());
         app.world.insert_resource(FrameCounter(0));
-        app.world.insert_resource(FpsState {
-            count: 0,
-            last_tick: esp_hal::time::Instant::now()
-                .duration_since_epoch()
-                .as_micros(),
-            display: 0,
-        });
 
         // HiDPI downscale doubles the logical viewport (128 → 256),
         // upscale halves it (128 → 64); both shift the demo tuning.

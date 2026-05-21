@@ -37,14 +37,18 @@ where
 
 /// `FpsSummaryPlugin::with_sink` target for ESP. Pipes the same data
 /// the std default sink writes to stderr through `esp_println`, plus
-/// the per-name perf aggregation. Replaces the old standalone
-/// `EspPerfSummaryPlugin`.
+/// the per-name perf aggregation. Also publishes the latest fps
+/// number to `crate::FPS_DISPLAY` for the LCD overlay.
 pub fn esp_perf_sink(report: FpsSummary<'_>) {
     let fps = if report.avg_frame_ns == 0 {
         0
     } else {
         1_000_000_000 / report.avg_frame_ns
     };
+    #[cfg(feature = "fps-overlay")]
+    unsafe {
+        crate::FPS_DISPLAY = fps as u32;
+    }
     esp_println::println!(
         "[perf] {} frames | frame {}us ({} fps) = event {} + systems {} + layout {} + render {} + flush {} + seed {}",
         report.frames,
