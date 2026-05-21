@@ -360,8 +360,9 @@ fn main() -> ! {
         #[cfg(feature = "demo-widgets")]
         demo_widgets::setup(&mut app);
 
-        app.add_plugin(esp_plugins::SystimerClockPlugin)
-            .add_plugin(esp_plugins::EspPerfSummaryPlugin::default());
+        app.add_plugin(esp_plugins::SystimerClockPlugin).add_plugin(
+            mirui::plugins::FpsSummaryPlugin::new(100).with_sink(esp_plugins::esp_perf_sink),
+        );
 
         app.run();
         unreachable!();

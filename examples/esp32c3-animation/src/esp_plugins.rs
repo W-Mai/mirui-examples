@@ -1,7 +1,7 @@
-use mirui::prelude::*;
-use mirui::ecs::MonoClock;
 use mirui::app::{App, RendererFactory};
+use mirui::ecs::MonoClock;
 use mirui::plugin::Plugin;
+use mirui::plugins::FpsSummary;
 use mirui::surface::Surface;
 
 // esp_hal::time::Instant wraps after >7 years (uses the full 52-bit
@@ -35,111 +35,48 @@ where
     }
 }
 
-pub struct EspPerfSummaryPlugin {
-    frames_per_summary: u32,
-    frame_count: u32,
-    frame_ns_total: u64,
-    event_ns_total: u64,
-    systems_ns_total: u64,
-    layout_ns_total: u64,
-    render_ns_total: u64,
-    flush_ns_total: u64,
-    seed_prev_ns_total: u64,
-}
-
-impl EspPerfSummaryPlugin {
-    pub fn new(frames_per_summary: u32) -> Self {
-        Self {
-            frames_per_summary,
-            frame_count: 0,
-            frame_ns_total: 0,
-            event_ns_total: 0,
-            systems_ns_total: 0,
-            layout_ns_total: 0,
-            render_ns_total: 0,
-            flush_ns_total: 0,
-            seed_prev_ns_total: 0,
-        }
+/// `FpsSummaryPlugin::with_sink` target for ESP. Pipes the same data
+/// the std default sink writes to stderr through `esp_println`, plus
+/// the per-name perf aggregation. Replaces the old standalone
+/// `EspPerfSummaryPlugin`.
+pub fn esp_perf_sink(report: FpsSummary<'_>) {
+    let fps = if report.avg_frame_ns == 0 {
+        0
+    } else {
+        1_000_000_000 / report.avg_frame_ns
+    };
+    esp_println::println!(
+        "[perf] {} frames | frame {}us ({} fps) = event {} + systems {} + layout {} + render {} + flush {} + seed {}",
+        report.frames,
+        report.avg_frame_ns / 1000,
+        fps,
+        report.avg_event_poll_ns / 1000,
+        report.avg_systems_ns / 1000,
+        report.avg_layout_ns / 1000,
+        report.avg_render_ns / 1000,
+        report.avg_flush_ns / 1000,
+        report.avg_seed_prev_ns / 1000,
+    );
+    if let Some(s) = report.stats {
+        esp_println::println!(
+            "[perf] window={} min {}us max {}us p99 {}us jitter {}us",
+            s.len(),
+            s.min() / 1000,
+            s.max() / 1000,
+            s.p99() / 1000,
+            s.jitter() / 1000,
+        );
     }
-}
-
-impl Default for EspPerfSummaryPlugin {
-    fn default() -> Self {
-        Self::new(100)
-    }
-}
-
-impl<B, F> Plugin<B, F> for EspPerfSummaryPlugin
-where
-    B: Surface,
-    F: RendererFactory<B>,
-{
-    fn build(&mut self, _app: &mut App<B, F>) {}
-
-    fn post_render(&mut self, world: &mut World, _render_nanos: u64) {
-        // post_render fires once per render() / render_dirty() call.
-        // The first one (before App::run starts looping) won't have
-        // FrameTimings yet, so guard.
-        let Some(t) = world.resource::<mirui::ecs::FrameTimings>() else {
-            return;
-        };
-        self.frame_count += 1;
-        self.frame_ns_total += t.frame_nanos;
-        self.event_ns_total += t.event_poll_nanos;
-        self.systems_ns_total += t.systems_nanos;
-        self.layout_ns_total += t.layout_nanos;
-        self.render_ns_total += t.render_nanos;
-        self.flush_ns_total += t.flush_nanos;
-        self.seed_prev_ns_total += t.seed_prev_nanos;
-        if self.frame_count >= self.frames_per_summary {
-            let avg = |total: u64| total / self.frame_count as u64 / 1000;
+    if !report.perf_events.is_empty() {
+        let aggr = mirui::perf::aggregate(&report.perf_events);
+        for stat in &aggr {
             esp_println::println!(
-                "[perf] {} frames | frame {}us = event {} + systems {} + layout {} + render {} + flush {} + seed {}",
-                self.frame_count,
-                avg(self.frame_ns_total),
-                avg(self.event_ns_total),
-                avg(self.systems_ns_total),
-                avg(self.layout_ns_total),
-                avg(self.render_ns_total),
-                avg(self.flush_ns_total),
-                avg(self.seed_prev_ns_total),
+                "[perf] {:24} count {:>5}  avg {:>5}us  max {:>5}us",
+                stat.name,
+                stat.count,
+                (stat.total_ns / stat.count as u64) / 1000,
+                stat.max_ns / 1000,
             );
-            if let Some(stats) = world.resource::<mirui::ecs::FrameStats>() {
-                esp_println::println!(
-                    "[perf] window={} avg {}us min {}us max {}us p99 {}us jitter {}us",
-                    stats.len(),
-                    stats.avg() / 1000,
-                    stats.min() / 1000,
-                    stats.max() / 1000,
-                    stats.p99() / 1000,
-                    stats.jitter() / 1000,
-                );
-            }
-            // Drain mirui::perf trace_span events for this window and
-            // print the per-name aggregate. SystimerClockPlugin sets
-            // mirui::perf::set_clock so trace_span! actually records
-            // on this MCU.
-            let events = mirui::perf::drain_events();
-            if !events.is_empty() {
-                let stats = mirui::perf::aggregate(&events);
-                for s in &stats {
-                    esp_println::println!(
-                        "[perf] {:24} count {:>5}  avg {:>5}us  max {:>5}us",
-                        s.name,
-                        s.count,
-                        (s.total_ns / s.count as u64 / 1000) as u32,
-                        (s.max_ns / 1000) as u32,
-                    );
-                }
-            }
-            self.frame_count = 0;
-            self.frame_ns_total = 0;
-            self.event_ns_total = 0;
-            self.systems_ns_total = 0;
-            self.layout_ns_total = 0;
-            self.render_ns_total = 0;
-            self.flush_ns_total = 0;
-            self.seed_prev_ns_total = 0;
         }
     }
 }
