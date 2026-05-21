@@ -1,14 +1,9 @@
+use mirui::prelude::*;
 use mirui::anim::{Spring, ease};
-use mirui::app::App;
-use mirui::components::slider::Slider;
-use mirui::components::switch::Switch;
-use mirui::ecs::{Entity, World};
+use mirui::components::{Slider, Switch};
 use mirui::event::GestureHandler;
 use mirui::event::gesture::GestureEvent;
 use mirui::event::sim::{SimAction, SimTimeline, sim_timeline_system};
-use mirui::layout::*;
-use mirui::types::{Color, Dimension, Fixed, Point};
-use mirui::widget::builder::WidgetBuilder;
 use mirui::widget::dirty::Dirty;
 use mirui::widget::theme::{Theme, ThemedColor};
 

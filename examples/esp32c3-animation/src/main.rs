@@ -17,9 +17,7 @@ use esp_hal::time::Rate;
 // App, FPS resources, perf plugin) are cfg-gated on "not shapes/butterfly".
 
 #[cfg(feature = "app-demo")]
-use mirui::app::App;
-#[cfg(feature = "app-demo")]
-use mirui::ecs::World;
+use mirui::prelude::{App, World};
 use mirui::surface::framebuf::FramebufSurface;
 use mirui::types::Rect;
 

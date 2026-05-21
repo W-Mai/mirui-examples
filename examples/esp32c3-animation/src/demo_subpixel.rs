@@ -1,9 +1,5 @@
+use mirui::prelude::*;
 use alloc::vec::Vec;
-use mirui::app::App;
-use mirui::ecs::World;
-use mirui::layout::*;
-use mirui::types::{Color, Dimension, Fixed};
-use mirui::widget::builder::WidgetBuilder;
 
 use crate::board::{H, W};
 

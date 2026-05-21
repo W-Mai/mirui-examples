@@ -4,11 +4,11 @@
 //! Kept deliberately small: the per-pixel sqrt in fill_path's AA makes large
 //! filled regions extremely slow on ESP32-C3 (tracked as a Quality TODO).
 
+use mirui::prelude::*;
 use mirui::surface::framebuf::FramebufSurface;
 use mirui::surface::{Surface, FramebufferAccess};
 use mirui::draw::canvas::Canvas;
 use mirui::draw::sw::SwRenderer;
-use mirui::types::{Color, Fixed, Point, Rect};
 
 use crate::board::{H, W, systimer_now};
 

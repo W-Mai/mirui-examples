@@ -10,21 +10,13 @@
 //!   rotates Dark / Light / Custom every 3 s; the whole UI repaints
 //!   in the new palette next frame.
 
+use mirui::prelude::*;
 use mirui::anim::ease;
-use mirui::app::App;
-use mirui::components::lazy_list::{LazyList, LazyListBinder, LazyListPool};
-use mirui::components::progress_bar::ProgressBar;
-use mirui::components::slider::Slider;
-use mirui::components::switch::Switch;
-use mirui::components::tab_pages::TabContent;
-use mirui::components::tabbar::TabBar;
-use mirui::components::text::Text;
-use mirui::ecs::{Entity, World};
+use mirui::components::{LazyList, LazyListBinder, LazyListPool};
+use mirui::components::{ProgressBar, Slider, Switch, TabContent, TabBar, Text};
 use mirui::event::scroll::{ScrollAxis, ScrollConfig, ScrollOffset};
 use mirui::event::sim::{SimAction, SimTimeline, sim_timeline_system};
-use mirui::layout::*;
 use mirui::types::{Color, DimPoint, Dimension, Fixed};
-use mirui::widget::builder::WidgetBuilder;
 use mirui::widget::dirty::Dirty;
 use mirui::widget::theme::{self, ColorToken};
 use mirui::widget::{Children, Theme};

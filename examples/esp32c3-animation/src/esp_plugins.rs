@@ -1,6 +1,6 @@
+use mirui::prelude::*;
 use mirui::ecs::MonoClock;
 use mirui::app::{App, RendererFactory};
-use mirui::ecs::World;
 use mirui::plugin::Plugin;
 use mirui::surface::Surface;
 

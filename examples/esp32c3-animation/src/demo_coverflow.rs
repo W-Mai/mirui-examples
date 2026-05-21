@@ -1,12 +1,9 @@
-use mirui::app::App;
+use mirui::prelude::*;
 use mirui::components::assets::IMG_THUMBS_UP;
-use mirui::components::image::Image;
+use mirui::components::Image;
 use mirui::event::scroll::{ScrollAxis, ScrollConfig, ScrollOffset};
-use mirui::components::transform_3d::WidgetTransform3D;
-use mirui::ecs::World;
-use mirui::layout::*;
+use mirui::components::WidgetTransform3D;
 use mirui::types::{Color, Dimension, Fixed, Transform3D};
-use mirui::widget::builder::WidgetBuilder;
 use mirui::widget::dirty::Dirty;
 
 const CARD_W: i32 = 40;

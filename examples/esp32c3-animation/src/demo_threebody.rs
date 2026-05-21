@@ -1,15 +1,11 @@
+use mirui::prelude::*;
 use alloc::vec::Vec;
-use mirui::app::App;
 use mirui::components::assets::*;
-use mirui::components::image::Image;
+use mirui::components::Image;
 #[cfg(feature = "spin")]
 use mirui::components::transform_3d::WidgetTransform3D;
-use mirui::ecs::World;
-use mirui::layout::*;
 #[cfg(feature = "spin")]
 use mirui::types::Transform3D;
-use mirui::types::{Color, Dimension, Fixed};
-use mirui::widget::builder::WidgetBuilder;
 #[cfg(feature = "spin")]
 use mirui::widget::dirty::Dirty;
 
