@@ -85,13 +85,10 @@ fn b64_encode(input: &[u8], out: &mut [u8]) -> usize {
     o
 }
 
-// Latest FPS value computed by FpsSummaryPlugin's sink each summary
-// window. Single-writer on single-core RV32 with no reentrancy.
+// Single-writer on single-core RV32, no reentrancy → static mut is sound.
 #[cfg(feature = "fps-overlay")]
 pub static mut FPS_DISPLAY: u32 = 0;
 
-// Cumulative flush time within each 1-second report window; only the
-// App-based demos maintain this, shapes/butterfly don't need it.
 #[cfg(feature = "app-demo")]
 static mut FLUSH_ACC: u32 = 0;
 

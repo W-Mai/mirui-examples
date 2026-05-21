@@ -4,14 +4,8 @@ use mirui::plugin::Plugin;
 use mirui::plugins::FpsSummary;
 use mirui::surface::Surface;
 
-// esp_hal::time::Instant wraps after >7 years (uses the full 52-bit
-// systimer counter, not just the low 32 bits we read from CSR 0x7E2
-// in board::systimer_now). The previous implementation read CSR
-// systimer_low and treated u32 cycle wrap (every 26.8s @ 160 MHz) as
-// a normal monotonic clock, which is why anything past the first
-// 26.8s of runtime would jump backwards by ~26.8s and corrupt every
-// downstream elapsed-ms calculation (sim_timeline cycle drift,
-// animation tick clamp, gesture recognizer timing).
+// esp_hal Instant uses the full 52-bit systimer; csr 0x7E2 wraps
+// every 26.8s and was the source of the v0.10-v0.17 fps drift.
 fn esp_clock_ns() -> u64 {
     let micros = esp_hal::time::Instant::now()
         .duration_since_epoch()
@@ -19,6 +13,11 @@ fn esp_clock_ns() -> u64 {
     micros.saturating_mul(1000)
 }
 
+/// Backs `MonoClock` and `crate::perf` with `esp_hal::time::Instant`.
+///
+/// **Inserts**
+/// - resource: `MonoClock`
+/// - global: calls `mirui::perf::set_clock` so `trace_span!` records
 #[derive(Default)]
 pub struct SystimerClockPlugin;
 
@@ -29,16 +28,12 @@ where
 {
     fn build(&mut self, app: &mut App<B, F>) {
         app.world.insert_resource(MonoClock::new(esp_clock_ns));
-        // Wires the same clock into mirui::perf so `trace_span!` /
-        // `#[trace_fn]` start recording on this MCU.
         mirui::perf::set_clock(esp_clock_ns);
     }
 }
 
-/// `FpsSummaryPlugin::with_sink` target for ESP. Pipes the same data
-/// the std default sink writes to stderr through `esp_println`, plus
-/// the per-name perf aggregation. Also publishes the latest fps
-/// number to `crate::FPS_DISPLAY` for the LCD overlay.
+/// `FpsSummaryPlugin` sink. Side effect: writes `crate::FPS_DISPLAY`
+/// for the LCD overlay.
 pub fn esp_perf_sink(report: FpsSummary<'_>) {
     let fps = if report.avg_frame_ns == 0 {
         0
@@ -50,11 +45,11 @@ pub fn esp_perf_sink(report: FpsSummary<'_>) {
         crate::FPS_DISPLAY = fps as u32;
     }
     esp_println::println!(
-        "[perf] {} frames | frame {}us ({} fps) = event {} + systems {} + layout {} + render {} + flush {} + seed {}",
+        "[perf] {} frames | frame {}us ({} fps) = input {} + systems {} + layout {} + render {} + flush {} + seed {}",
         report.frames,
         report.avg_frame_ns / 1000,
         fps,
-        report.avg_event_poll_ns / 1000,
+        report.avg_input_ns / 1000,
         report.avg_systems_ns / 1000,
         report.avg_layout_ns / 1000,
         report.avg_render_ns / 1000,
@@ -71,8 +66,11 @@ pub fn esp_perf_sink(report: FpsSummary<'_>) {
             s.jitter() / 1000,
         );
     }
-    if !report.perf_events.is_empty() {
-        let aggr = mirui::perf::aggregate(&report.perf_events);
+    // Drain perf events explicitly. Mutually exclusive with installing
+    // PerfReportPlugin in the same App (single global event stream).
+    let events = mirui::perf::drain_events();
+    if !events.is_empty() {
+        let aggr = mirui::perf::aggregate(&events);
         for stat in &aggr {
             esp_println::println!(
                 "[perf] {:24} count {:>5}  avg {:>5}us  max {:>5}us",
