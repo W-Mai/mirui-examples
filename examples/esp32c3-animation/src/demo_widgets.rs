@@ -118,6 +118,7 @@ mirui_macros::timer!(Cycle, every: 3_000, |world, entity| {
 });
 
 pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
+    app.add_plugin(mirui::plugins::InputFeedbackPlugin::default());
     app.add_system(sim_timeline_system::system());
     app.add_system(slider_to_progress_system::system());
 
