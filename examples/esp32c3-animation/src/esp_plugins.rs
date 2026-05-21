@@ -104,6 +104,17 @@ where
                 avg(self.flush_ns_total),
                 avg(self.seed_prev_ns_total),
             );
+            if let Some(stats) = world.resource::<mirui::ecs::FrameStats>() {
+                esp_println::println!(
+                    "[perf] window={} avg {}us min {}us max {}us p99 {}us jitter {}us",
+                    stats.len(),
+                    stats.avg() / 1000,
+                    stats.min() / 1000,
+                    stats.max() / 1000,
+                    stats.p99() / 1000,
+                    stats.jitter() / 1000,
+                );
+            }
             // Drain mirui::perf trace_span events for this window and
             // print the per-name aggregate. SystimerClockPlugin sets
             // mirui::perf::set_clock so trace_span! actually records
