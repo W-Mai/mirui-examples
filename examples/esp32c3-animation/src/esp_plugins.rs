@@ -29,6 +29,9 @@ where
 {
     fn build(&mut self, app: &mut App<B, F>) {
         app.world.insert_resource(MonoClock::new(esp_clock_ns));
+        // Wires the same clock into mirui::perf so `trace_span!` /
+        // `#[trace_fn]` start recording on this MCU.
+        mirui::perf::set_clock(esp_clock_ns);
     }
 }
 
@@ -101,6 +104,23 @@ where
                 avg(self.flush_ns_total),
                 avg(self.seed_prev_ns_total),
             );
+            // Drain mirui::perf trace_span events for this window and
+            // print the per-name aggregate. SystimerClockPlugin sets
+            // mirui::perf::set_clock so trace_span! actually records
+            // on this MCU.
+            let events = mirui::perf::drain_events();
+            if !events.is_empty() {
+                let stats = mirui::perf::aggregate(&events);
+                for s in &stats {
+                    esp_println::println!(
+                        "[perf] {:24} count {:>5}  avg {:>5}us  max {:>5}us",
+                        s.name,
+                        s.count,
+                        (s.total_ns / s.count as u64 / 1000) as u32,
+                        (s.max_ns / 1000) as u32,
+                    );
+                }
+            }
             self.frame_count = 0;
             self.frame_ns_total = 0;
             self.event_ns_total = 0;
