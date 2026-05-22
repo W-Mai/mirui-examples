@@ -89,6 +89,26 @@ fn b64_encode(input: &[u8], out: &mut [u8]) -> usize {
 #[cfg(feature = "fps-overlay")]
 pub static mut FPS_DISPLAY: u32 = 0;
 
+// RV32IMC has no A extension, so AtomicU32::fetch_add fails to link.
+// One critical_section guard around a plain `Cell<u32>` is the
+// established polyfill (same shape mirui::perf uses).
+#[cfg(feature = "fps-overlay")]
+pub static BUDGET_VIOLATIONS: critical_section::Mutex<core::cell::Cell<u32>> =
+    critical_section::Mutex::new(core::cell::Cell::new(0));
+
+#[cfg(feature = "fps-overlay")]
+pub fn budget_violations_load() -> u32 {
+    critical_section::with(|cs| BUDGET_VIOLATIONS.borrow(cs).get())
+}
+
+#[cfg(feature = "fps-overlay")]
+pub fn budget_violations_inc() {
+    critical_section::with(|cs| {
+        let cell = BUDGET_VIOLATIONS.borrow(cs);
+        cell.set(cell.get().saturating_add(1));
+    });
+}
+
 #[cfg(feature = "app-demo")]
 static mut FLUSH_ACC: u32 = 0;
 
@@ -183,7 +203,8 @@ fn main() -> ! {
         #[cfg(feature = "fps-overlay")]
         {
             let fps = unsafe { FPS_DISPLAY };
-            board::draw_fps_lcd(&mut lcd, fps);
+            let violations = budget_violations_load();
+            board::draw_perf_overlay(&mut lcd, fps, violations);
         }
         #[cfg(feature = "app-demo")]
         {
@@ -302,12 +323,20 @@ fn main() -> ! {
             .with_sink(esp_plugins::esp_span_report_sink);
         #[cfg(feature = "trace-stream")]
         let perf_report = perf_report.with_perfetto_line_sink(esp_plugins::esp_perfetto_box());
+        // Budget thresholds set ~20% above measured baselines so a
+        // healthy run stays silent and a real perf regression trips
+        // the LCD overlay counter (red `<n>!` line).
+        let budget = mirui::plugins::BudgetReportPlugin::new(100)
+            .with_avg_budget(17_000_000)
+            .with_p99_budget(22_000_000)
+            .with_sink(esp_plugins::esp_budget_sink);
         app.add_plugin(esp_plugins::SystimerClockPlugin)
             .add_plugin(
                 mirui::plugins::FpsSummaryPlugin::new(100)
                     .with_sink(esp_plugins::esp_perf_sink),
             )
-            .add_plugin(perf_report);
+            .add_plugin(perf_report)
+            .add_plugin(budget);
 
         app.run();
         unreachable!();

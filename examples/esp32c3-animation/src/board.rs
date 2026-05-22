@@ -125,10 +125,31 @@ pub fn systimer_now() -> u32 {
 }
 
 #[cfg(feature = "fps-overlay")]
-pub fn draw_fps_lcd<S: SpiBus<u8>>(lcd: &mut St7735<S>, fps: u32) {
+pub fn draw_perf_overlay<S: SpiBus<u8>>(
+    lcd: &mut St7735<S>,
+    fps: u32,
+    budget_violations: u32,
+) {
+    // RGB565 swapped (LSB-first byte order over SPI):
+    //   yellow ≈ 0xFFE0 little-endian → bytes E0 FF
+    //   red    ≈ 0xF800 little-endian → bytes 00 F8
+    draw_overlay_line(lcd, 2, fps, b'f', [0xE0, 0xFF]);
+    if budget_violations != 0 {
+        draw_overlay_line(lcd, 12, budget_violations, b'!', [0x00, 0xF8]);
+    }
+}
+
+#[cfg(feature = "fps-overlay")]
+fn draw_overlay_line<S: SpiBus<u8>>(
+    lcd: &mut St7735<S>,
+    sy: u16,
+    value: u32,
+    suffix: u8,
+    px: [u8; 2],
+) {
     let mut num = [0u8; 8];
     let mut len = 0;
-    let mut n = fps;
+    let mut n = value;
     if n == 0 {
         num[0] = b'0';
         len = 1;
@@ -140,13 +161,13 @@ pub fn draw_fps_lcd<S: SpiBus<u8>>(lcd: &mut St7735<S>, fps: u32) {
         }
         num[..len].reverse();
     }
-    num[len] = b'f';
+    num[len] = suffix;
     len += 1;
 
     let fw: u16 = (len as u16) * 8;
     let fh: u16 = 8;
     let sx = W - fw - 2;
-    lcd.set_window(sx, 2, sx + fw - 1, 2 + fh - 1);
+    lcd.set_window(sx, sy, sx + fw - 1, sy + fh - 1);
     lcd.cs.set_low();
     lcd.dc.set_high();
     let mut row_buf = vec![0u8; fw as usize * 2];
@@ -156,9 +177,8 @@ pub fn draw_fps_lcd<S: SpiBus<u8>>(lcd: &mut St7735<S>, fps: u32) {
             let bit = col % 8;
             let glyph = mirui::draw::font::glyph(num[ci]);
             let on = glyph[row] & (0x80 >> bit) != 0;
-            let px: u16 = if on { 0xFFE0 } else { 0x0000 };
-            row_buf[col * 2] = (px >> 8) as u8;
-            row_buf[col * 2 + 1] = px as u8;
+            row_buf[col * 2] = if on { px[0] } else { 0x00 };
+            row_buf[col * 2 + 1] = if on { px[1] } else { 0x00 };
         }
         lcd.spi.write(&row_buf).ok();
     }

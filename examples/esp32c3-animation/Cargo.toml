@@ -65,6 +65,7 @@ esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c3"] }
 # Flip it back on for demos that care about edge quality more than fps.
 mirui = { git = "https://github.com/W-Mai/mirui.git", default-features = false, features = ["perf"] }
 mirui-macros = { git = "https://github.com/W-Mai/mirui.git" }
+critical-section = "1.2"
 
 [patch."https://github.com/W-Mai/mirui.git"]
 mirui = { path = "../../../miru" }

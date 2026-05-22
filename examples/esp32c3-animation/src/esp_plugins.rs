@@ -92,3 +92,18 @@ pub fn esp_perfetto_box() -> mirui::plugins::PerfettoLineSink {
         esp_println::println!("[trace] {}", line);
     })
 }
+
+/// `BudgetReportPlugin` sink: prints over esp_println and bumps the
+/// LCD overlay counter (red `<n>!` line under the fps readout).
+pub fn esp_budget_sink(v: mirui::plugins::BudgetViolation) {
+    esp_println::println!(
+        "[budget] avg {}us (budget {}us) p99 {}us (budget {}us) jitter {}us",
+        v.avg_ns / 1000,
+        v.budget_avg_ns / 1000,
+        v.p99_ns / 1000,
+        v.budget_p99_ns / 1000,
+        v.jitter_ns / 1000,
+    );
+    #[cfg(feature = "fps-overlay")]
+    crate::budget_violations_inc();
+}
