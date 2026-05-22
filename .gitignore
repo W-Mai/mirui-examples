@@ -2,3 +2,4 @@
 **/target
 .pio/build
 .pio/.packages
+.cha/

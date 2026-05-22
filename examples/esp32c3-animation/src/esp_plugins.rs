@@ -80,5 +80,12 @@ pub fn esp_perf_sink(report: FpsSummary<'_>) {
                 stat.max_ns / 1000,
             );
         }
+        let mut buf = alloc::string::String::with_capacity(128);
+        for ev in &events {
+            buf.clear();
+            if mirui::perf::format_chrome_event(ev, &mut buf).is_ok() {
+                esp_println::println!("[trace] {}", buf);
+            }
+        }
     }
 }
