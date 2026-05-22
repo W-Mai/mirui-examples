@@ -33,7 +33,8 @@ where
 }
 
 /// `FpsSummaryPlugin` sink. Side effect: writes `crate::FPS_DISPLAY`
-/// for the LCD overlay.
+/// for the LCD overlay. Per-span detail and Chrome-trace JSON come
+/// from `PerfReportPlugin` instead of being re-implemented here.
 pub fn esp_perf_sink(report: FpsSummary<'_>) {
     let fps = if report.avg_frame_ns == 0 {
         0
@@ -66,26 +67,29 @@ pub fn esp_perf_sink(report: FpsSummary<'_>) {
             s.jitter() / 1000,
         );
     }
-    // Drain perf events explicitly. Mutually exclusive with installing
-    // PerfReportPlugin in the same App (single global event stream).
-    let events = mirui::perf::drain_events();
-    if !events.is_empty() {
-        let aggr = mirui::perf::aggregate(&events);
-        for stat in &aggr {
-            esp_println::println!(
-                "[perf] {:24} count {:>5}  avg {:>5}us  max {:>5}us",
-                stat.name,
-                stat.count,
-                (stat.total_ns / stat.count as u64) / 1000,
-                stat.max_ns / 1000,
-            );
+}
+
+/// `PerfReportPlugin` sink — per-span aggregates over `esp_println`.
+pub fn esp_span_report_sink(report: &mirui::plugins::PerfReport) {
+    for s in &report.stage_stats {
+        if s.count == 0 {
+            continue;
         }
-        let mut buf = alloc::string::String::with_capacity(128);
-        for ev in &events {
-            buf.clear();
-            if mirui::perf::format_chrome_event(ev, &mut buf).is_ok() {
-                esp_println::println!("[trace] {}", buf);
-            }
-        }
+        esp_println::println!(
+            "[perf] {:24} count {:>5}  avg {:>5}us  max {:>5}us",
+            s.name,
+            s.count,
+            (s.total_ns / s.count as u64) / 1000,
+            s.max_ns / 1000,
+        );
     }
+}
+
+/// Boxed sink for `PerfReportPlugin::with_perfetto_line_sink` — writes
+/// each Chrome-trace JSON line through `esp_println` so the host-side
+/// `tools/esp-trace.py` collector can read it off UART.
+pub fn esp_perfetto_box() -> mirui::plugins::PerfettoLineSink {
+    alloc::boxed::Box::new(|line: &str| {
+        esp_println::println!("[trace] {}", line);
+    })
 }

@@ -298,9 +298,16 @@ fn main() -> ! {
         #[cfg(feature = "demo-widgets")]
         demo_widgets::setup(&mut app);
 
-        app.add_plugin(esp_plugins::SystimerClockPlugin).add_plugin(
-            mirui::plugins::FpsSummaryPlugin::new(100).with_sink(esp_plugins::esp_perf_sink),
-        );
+        app.add_plugin(esp_plugins::SystimerClockPlugin)
+            .add_plugin(
+                mirui::plugins::FpsSummaryPlugin::new(100)
+                    .with_sink(esp_plugins::esp_perf_sink),
+            )
+            .add_plugin(
+                mirui::plugins::PerfReportPlugin::new(100)
+                    .with_sink(esp_plugins::esp_span_report_sink)
+                    .with_perfetto_line_sink(esp_plugins::esp_perfetto_box()),
+            );
 
         app.run();
         unreachable!();
