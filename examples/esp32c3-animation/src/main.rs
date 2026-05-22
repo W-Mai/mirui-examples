@@ -298,16 +298,16 @@ fn main() -> ! {
         #[cfg(feature = "demo-widgets")]
         demo_widgets::setup(&mut app);
 
+        let perf_report = mirui::plugins::PerfReportPlugin::new(100)
+            .with_sink(esp_plugins::esp_span_report_sink);
+        #[cfg(feature = "trace-stream")]
+        let perf_report = perf_report.with_perfetto_line_sink(esp_plugins::esp_perfetto_box());
         app.add_plugin(esp_plugins::SystimerClockPlugin)
             .add_plugin(
                 mirui::plugins::FpsSummaryPlugin::new(100)
                     .with_sink(esp_plugins::esp_perf_sink),
             )
-            .add_plugin(
-                mirui::plugins::PerfReportPlugin::new(100)
-                    .with_sink(esp_plugins::esp_span_report_sink)
-                    .with_perfetto_line_sink(esp_plugins::esp_perfetto_box()),
-            );
+            .add_plugin(perf_report);
 
         app.run();
         unreachable!();

@@ -15,6 +15,14 @@ fps-overlay = []
 # through the quad path (SDF / supersample) and adds per-frame cost.
 spin = []
 
+# Stream Chrome-trace JSON over UART for tools/esp-trace.py. Off by
+# default because each event is ~150 bytes and 115200 baud (~11.5
+# KB/s) is well below the ~300 KB/s a busy frame produces; leaving
+# this on contaminates the very perf numbers it's measuring. Enable
+# only when you actually want to capture a trace:
+#   cargo run ... --features demo-threebody,trace-stream
+trace-stream = []
+
 # Internal marker: this demo runs on top of `mirui::App` (ECS world,
 # systems, plugins). Consumers never set this directly — each App-family
 # demo enables it implicitly via its own feature.

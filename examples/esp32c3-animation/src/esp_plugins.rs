@@ -85,9 +85,8 @@ pub fn esp_span_report_sink(report: &mirui::plugins::PerfReport) {
     }
 }
 
-/// Boxed sink for `PerfReportPlugin::with_perfetto_line_sink` — writes
-/// each Chrome-trace JSON line through `esp_println` so the host-side
-/// `tools/esp-trace.py` collector can read it off UART.
+/// `[trace]` prefix is what `tools/esp-trace.py` greps for.
+#[cfg(feature = "trace-stream")]
 pub fn esp_perfetto_box() -> mirui::plugins::PerfettoLineSink {
     alloc::boxed::Box::new(|line: &str| {
         esp_println::println!("[trace] {}", line);
