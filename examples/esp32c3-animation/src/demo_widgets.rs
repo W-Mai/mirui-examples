@@ -19,7 +19,7 @@ use mirui::event::sim::{SimAction, SimTimeline, sim_timeline_system};
 use mirui::types::{Color, DimPoint, Dimension, Fixed};
 use mirui::widget::dirty::Dirty;
 use mirui::widget::theme::{self, ColorToken};
-use mirui::widget::{Children, Theme};
+use mirui::widget::{Children, OffscreenRender, Theme};
 
 use alloc::format;
 use alloc::vec::Vec;
@@ -111,6 +111,12 @@ mirui_macros::timer!(Cycle, every: 3_000, |world, entity| {
 
 pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
     app.add_plugin(mirui::plugins::InputFeedbackPlugin::default());
+    // ESP heap is 200 KB total; 32 KiB is enough for a couple of
+    // small-widget buffers (Switch is 40×20 = 1.6 KB) without
+    // crowding out the rest of the demo. The pool's default is
+    // disabled (budget=0) so OffscreenRender falls through to
+    // inline unless the app opts in here.
+    app.with_offscreen_pool_budget(32 * 1024);
     app.add_system(sim_timeline_system::system());
     app.add_system(slider_to_progress_system::system());
 
@@ -241,6 +247,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
                 enable_label (text: "Enable", text_color: ColorToken::OnSurface, grow: 1.0) {}
                 enable_switch (width: 40, height: 20) [
                     Switch::new(),
+                    OffscreenRender::default(),
                 ] {}
             }
             slider_row (
