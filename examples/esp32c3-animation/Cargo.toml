@@ -28,6 +28,14 @@ trace-stream = []
 # demo enables it implicitly via its own feature.
 app-demo = []
 
+# Standalone diagnostic: bypass the demo loop and render a sequence
+# of fixtures (red panel, form_page subtree, single Switch) with and
+# without OffscreenRender, then dump each frame's framebuffer as
+# base64 between [FB_BEGIN]/[FB_END] markers and emit an FNV-1a hash
+# per frame. The host script compares against a desktop unit test of
+# identical inputs to bisect ESP-vs-desktop discrepancies.
+esp-test-offscreen = []
+
 # App-family demos (ECS-based).
 demo-threebody = ["app-demo"]
 demo-subpixel = ["app-demo"]

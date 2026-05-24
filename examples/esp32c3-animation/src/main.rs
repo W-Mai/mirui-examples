@@ -42,6 +42,8 @@ mod demo_coverflow;
 mod demo_gesture;
 #[cfg(feature = "demo-widgets")]
 mod demo_widgets;
+#[cfg(feature = "esp-test-offscreen")]
+mod esp_test_offscreen;
 
 
 use board::{systimer_now, St7735, H, W};
@@ -126,6 +128,23 @@ fn frame_counter_system(world: &mut World) {
 #[esp_hal::main]
 fn main() -> ! {
     esp_alloc::heap_allocator!(size: 200 * 1024);
+
+    // Diagnostic harness short-circuits before peripherals — it doesn't
+    // need SPI/LCD, just heap + UART (esp_println uses the boot UART
+    // directly).
+    #[cfg(feature = "esp-test-offscreen")]
+    {
+        esp_test_offscreen::run();
+    }
+
+    #[cfg(not(feature = "esp-test-offscreen"))]
+    {
+        run_normal()
+    }
+}
+
+#[cfg(not(feature = "esp-test-offscreen"))]
+fn run_normal() -> ! {
     let peripherals = esp_hal::init(esp_hal::Config::default());
 
     #[cfg(feature = "app-demo")]
