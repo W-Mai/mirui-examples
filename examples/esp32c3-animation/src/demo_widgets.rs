@@ -338,7 +338,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
 
     app.world.insert_resource(
         SimTimeline::new(alloc::vec![
-            SimAction::wait(500),
+            SimAction::wait(800),
             SimAction::tap(DimPoint::CENTER).on(tab_form),
             SimAction::wait(800),
             SimAction::tap(DimPoint::CENTER).on(switch_e),
