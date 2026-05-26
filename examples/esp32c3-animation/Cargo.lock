@@ -835,7 +835,7 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "mirui"
-version = "0.20.2"
+version = "0.20.3"
 dependencies = [
  "critical-section",
  "hashbrown 0.15.5",
@@ -858,7 +858,7 @@ dependencies = [
 
 [[package]]
 name = "mirui-macros"
-version = "0.20.2"
+version = "0.20.3"
 dependencies = [
  "proc-macro2",
  "quote",
