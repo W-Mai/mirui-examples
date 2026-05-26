@@ -8,6 +8,12 @@ mirui_macros::animate!(GlassX, |world, entity, value| {
     mirui::widget::set_position(world, entity, value, Fixed::from_int(50));
 });
 
+mirui_macros::animate!(GaussRadius, |world, entity, value| {
+    if let Some(blur) = world.get_mut::<BackgroundBlur>(entity) {
+        blur.radius = value;
+    }
+});
+
 const TILE_COLORS: [Color; 4] = [
     Color::rgb(220, 60, 60),
     Color::rgb(220, 160, 40),
@@ -24,6 +30,11 @@ pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
         "glass_x",
         mirui::ecs::run_order::ANIMATION,
         GlassX::system(),
+    ));
+    app.add_system(mirui::ecs::System::new(
+        "gauss_radius",
+        mirui::ecs::run_order::ANIMATION,
+        GaussRadius::system(),
     ));
 
     let root = WidgetBuilder::new(&mut app.world)
@@ -125,6 +136,15 @@ pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
                 )
                 .into(),
             ),
+            GaussRadius(
+                Tween::new(
+                    Fixed::from_int(0),
+                    Fixed::from_int(3),
+                    3000,
+                    ease::ease_in_out_cubic,
+                    PlayMode::PingPong,
+                ).into(),
+            )
         ] {}
     };
 
