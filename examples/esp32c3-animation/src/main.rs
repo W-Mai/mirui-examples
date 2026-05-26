@@ -40,6 +40,8 @@ mod demo_flipcard;
 mod demo_coverflow;
 #[cfg(feature = "demo-gesture")]
 mod demo_gesture;
+#[cfg(feature = "demo-effects")]
+mod demo_effects;
 #[cfg(feature = "demo-widgets")]
 mod demo_widgets;
 #[cfg(feature = "esp-test-offscreen")]
@@ -337,6 +339,9 @@ fn run_normal() -> ! {
 
         #[cfg(feature = "demo-widgets")]
         demo_widgets::setup(&mut app);
+
+        #[cfg(feature = "demo-effects")]
+        demo_effects::setup(&mut app);
 
         let perf_report = mirui::plugins::PerfReportPlugin::new(100)
             .with_sink(esp_plugins::esp_span_report_sink);

@@ -44,6 +44,7 @@ demo-flipcard = ["app-demo"]     # 2.5D single-card flip around Y with perspecti
 demo-coverflow = ["app-demo"]
 demo-gesture = ["app-demo"]
 demo-widgets = ["app-demo"]
+demo-effects = ["app-demo"]     # Mirror + BackgroundBlur over a tile grid.
 
 # Standalone demos that drive FramebufSurface directly, no ECS.
 demo-shapes = []
