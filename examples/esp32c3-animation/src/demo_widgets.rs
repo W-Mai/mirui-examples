@@ -10,12 +10,12 @@
 //!   rotates Dark / Light / Custom every 3 s; the whole UI repaints
 //!   in the new palette next frame.
 
-use mirui::prelude::*;
 use mirui::anim::ease;
 use mirui::components::{LazyList, LazyListBinder, LazyListPool};
-use mirui::components::{ProgressBar, Slider, Switch, TabContent, TabBar, Text};
+use mirui::components::{ProgressBar, Slider, Switch, TabBar, TabContent, Text};
 use mirui::event::scroll::{ScrollAxis, ScrollConfig, ScrollOffset};
 use mirui::event::sim::{SimAction, SimTimeline, sim_timeline_system};
+use mirui::prelude::*;
 use mirui::types::{Color, DimPoint, Dimension, Fixed};
 use mirui::widget::dirty::Dirty;
 use mirui::widget::theme::{self, ColorToken};
@@ -39,8 +39,6 @@ struct FormProgress;
 /// Counter component on the cycle timer entity; the `timer!` callback
 /// reads it to pick the next preset.
 struct ThemeCycleIndex(u8);
-
-
 
 fn dark_with_accent() -> Theme {
     Theme::dark().with(ACCENT, Color::rgb(255, 200, 60))
@@ -333,7 +331,6 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
         .first()
         .expect("form Slider must be installed");
 
-
     let list_drag_anchor = list;
 
     app.world.insert_resource(
@@ -360,7 +357,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             SimAction::drag(
                 DimPoint::percent(50, 80),
                 DimPoint::percent(50, 20),
-                700,
+                300,
                 ease::ease_in_out_cubic,
             )
             .on(list_drag_anchor),
@@ -368,7 +365,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             SimAction::drag(
                 DimPoint::percent(50, 20),
                 DimPoint::percent(50, 80),
-                700,
+                300,
                 ease::ease_in_out_cubic,
             )
             .on(list_drag_anchor),
