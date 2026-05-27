@@ -7,8 +7,8 @@ use esp_alloc as _;
 use esp_hal::dma::{DmaRxBuf, DmaTxBuf};
 use esp_hal::dma_buffers;
 use esp_hal::gpio::{Level, Output, OutputConfig};
-use esp_hal::spi::master::{Config as SpiConfig, Spi};
 use esp_hal::spi::Mode as SpiMode;
+use esp_hal::spi::master::{Config as SpiConfig, Spi};
 use esp_hal::time::Rate;
 
 // Two demo families share this binary. `demo-shapes` / `demo-butterfly`
@@ -22,38 +22,36 @@ use mirui::surface::framebuf::FramebufSurface;
 use mirui::types::Rect;
 
 mod board;
-#[cfg(feature = "app-demo")]
-mod esp_plugins;
-#[cfg(feature = "demo-threebody")]
-mod demo_threebody;
-#[cfg(feature = "demo-subpixel")]
-mod demo_subpixel;
+#[cfg(feature = "demo-butterfly")]
+mod demo_butterfly;
+#[cfg(feature = "demo-coverflow")]
+mod demo_coverflow;
+#[cfg(feature = "demo-effects")]
+mod demo_effects;
+#[cfg(feature = "demo-flipcard")]
+mod demo_flipcard;
+#[cfg(feature = "demo-gesture")]
+mod demo_gesture;
 #[cfg(feature = "demo-particles")]
 mod demo_particles;
 #[cfg(feature = "demo-shapes")]
 mod demo_shapes;
-#[cfg(feature = "demo-butterfly")]
-mod demo_butterfly;
-#[cfg(feature = "demo-flipcard")]
-mod demo_flipcard;
-#[cfg(feature = "demo-coverflow")]
-mod demo_coverflow;
-#[cfg(feature = "demo-gesture")]
-mod demo_gesture;
-#[cfg(feature = "demo-effects")]
-mod demo_effects;
+#[cfg(feature = "demo-subpixel")]
+mod demo_subpixel;
+#[cfg(feature = "demo-threebody")]
+mod demo_threebody;
 #[cfg(feature = "demo-widgets")]
 mod demo_widgets;
+#[cfg(feature = "app-demo")]
+mod esp_plugins;
 #[cfg(feature = "esp-test-offscreen")]
 mod esp_test_offscreen;
 
-
-use board::{systimer_now, St7735, H, W};
+use board::{H, St7735, W, systimer_now};
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
-const B64_ALPHABET: &[u8; 64] =
-    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const B64_ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 fn b64_encode(input: &[u8], out: &mut [u8]) -> usize {
     let mut o = 0;
@@ -122,8 +120,39 @@ pub struct FrameCounter(pub u32);
 #[cfg(feature = "app-demo")]
 #[mirui::system]
 fn frame_counter_system(world: &mut World) {
-    if let Some(fc) = world.resource_mut::<FrameCounter>() {
+    let _n = if let Some(fc) = world.resource_mut::<FrameCounter>() {
         fc.0 = fc.0.wrapping_add(1);
+        fc.0
+    } else {
+        0
+    };
+    #[cfg(feature = "perf-plan-probe")]
+    if _n.is_multiple_of(30) {
+        if let Some(p) = world.resource::<mirui::widget::render_system::LastDirtyRegions>() {
+            for (i, r) in p.0.rects.iter().enumerate() {
+                esp_println::println!(
+                    "[plan] f={} rect[{}] {}x{}@({},{})",
+                    _n,
+                    i,
+                    r.w.to_int(),
+                    r.h.to_int(),
+                    r.x.to_int(),
+                    r.y.to_int(),
+                );
+            }
+            for (i, s) in p.0.shifts.iter().enumerate() {
+                esp_println::println!(
+                    "[plan] f={} scr[{}] {}x{}@({},{}) dy={}",
+                    _n,
+                    i,
+                    s.area.w.to_int(),
+                    s.area.h.to_int(),
+                    s.area.x.to_int(),
+                    s.area.y.to_int(),
+                    s.dy.to_int(),
+                );
+            }
+        }
     }
 }
 
@@ -149,7 +178,7 @@ fn main() -> ! {
 fn run_normal() -> ! {
     let peripherals = esp_hal::init(esp_hal::Config::default());
 
-    #[cfg(feature = "app-demo")]
+    #[cfg(all(feature = "app-demo", feature = "perf-fps"))]
     unsafe {
         mirui::draw::quad_perf::CLOCK = || board::systimer_now() as u64;
     }
@@ -185,7 +214,8 @@ fn run_normal() -> ! {
     // baud takes ~4 s to drain; renderer stalls for that window. Set
     // wide enough so most of the frame budget is still rendering.
     let mut capture_counter: u32 = 0;
-    const CAPTURE_EVERY: u32 = 600;
+    // Drop to 600 / 50 / 30 when capturing visual snapshots.
+    const CAPTURE_EVERY: u32 = 1_000_000;
 
     let flush_cb = move |buf: &[u8], area: &Rect| {
         #[cfg(feature = "app-demo")]
@@ -343,24 +373,25 @@ fn run_normal() -> ! {
         #[cfg(feature = "demo-effects")]
         demo_effects::setup(&mut app);
 
-        let perf_report = mirui::plugins::PerfReportPlugin::new(100)
-            .with_sink(esp_plugins::esp_span_report_sink);
-        #[cfg(feature = "trace-stream")]
-        let perf_report = perf_report.with_perfetto_line_sink(esp_plugins::esp_perfetto_box());
-        // Budget thresholds set ~20% above measured baselines so a
-        // healthy run stays silent and a real perf regression trips
-        // the LCD overlay counter (red `<n>!` line).
-        let budget = mirui::plugins::BudgetReportPlugin::new(100)
-            .with_avg_budget(17_000_000)
-            .with_p99_budget(22_000_000)
-            .with_sink(esp_plugins::esp_budget_sink);
-        app.add_plugin(esp_plugins::SystimerClockPlugin)
-            .add_plugin(
-                mirui::plugins::FpsSummaryPlugin::new(100)
-                    .with_sink(esp_plugins::esp_perf_sink),
+        app.add_plugin(esp_plugins::SystimerClockPlugin);
+
+        #[cfg(feature = "perf-fps")]
+        {
+            let perf_report = mirui::plugins::PerfReportPlugin::new(100)
+                .with_sink(esp_plugins::esp_span_report_sink);
+            #[cfg(feature = "perf-trace")]
+            let perf_report = perf_report.with_perfetto_line_sink(esp_plugins::esp_perfetto_box());
+            // Budget +20% above measured baseline.
+            let budget = mirui::plugins::BudgetReportPlugin::new(100)
+                .with_avg_budget(17_000_000)
+                .with_p99_budget(22_000_000)
+                .with_sink(esp_plugins::esp_budget_sink);
+            app.add_plugin(
+                mirui::plugins::FpsSummaryPlugin::new(100).with_sink(esp_plugins::esp_perf_sink),
             )
             .add_plugin(perf_report)
             .add_plugin(budget);
+        }
 
         app.run();
         unreachable!();

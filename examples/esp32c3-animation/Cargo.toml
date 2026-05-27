@@ -15,13 +15,22 @@ fps-overlay = []
 # through the quad path (SDF / supersample) and adds per-frame cost.
 spin = []
 
-# Stream Chrome-trace JSON over UART for tools/esp-trace.py. Off by
-# default because each event is ~150 bytes and 115200 baud (~11.5
-# KB/s) is well below the ~300 KB/s a busy frame produces; leaving
-# this on contaminates the very perf numbers it's measuring. Enable
-# only when you actually want to capture a trace:
-#   cargo run ... --features demo-threebody,trace-stream
-trace-stream = []
+# FPS / p99 / budget reports + per-window [perf] span totals.
+# Pulls in mirui's `perf` feature(perf event ring + trace_span
+# instrumentation)so it isn't paid for in default builds.
+perf-fps = ["mirui/perf"]
+
+# perf-fps + chrome-trace JSON streamed over UART for
+# tools/esp-trace.py. ESP32-C3's USB Serial-JTAG drains ~64
+# bytes / USB frame, so a busy frame's ~2.4 KB of trace events
+# blocks ~20 ms; perf-fps numbers will inflate by that much.
+#   cargo run ... --features demo-threebody,perf-trace
+perf-trace = ["perf-fps"]
+
+# Dump every 30th frame's `LastDirtyRegions` over UART. Diagnostic
+# only — every dump is several extra println calls and pollutes
+# perf-fps' UART budget.
+perf-plan-probe = ["mirui/perf"]
 
 # Internal marker: this demo runs on top of `mirui::App` (ECS world,
 # systems, plugins). Consumers never set this directly — each App-family
@@ -72,7 +81,7 @@ esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c3"] }
 # `default-features = false` drops quad-aa — the 2×2 supersample costs
 # ~7 ms/frame on cover-flow (33 fps → 27 fps) which the C3 can't spare.
 # Flip it back on for demos that care about edge quality more than fps.
-mirui = { git = "https://github.com/W-Mai/mirui.git", default-features = false, features = ["perf"] }
+mirui = { git = "https://github.com/W-Mai/mirui.git", default-features = false }
 mirui-macros = { git = "https://github.com/W-Mai/mirui.git" }
 critical-section = "1.2"
 

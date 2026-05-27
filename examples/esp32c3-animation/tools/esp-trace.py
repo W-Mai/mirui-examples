@@ -3,7 +3,7 @@
 
 Reads `[trace] {...}` lines (one per PerfEvent, emitted by
 `esp_perfetto_box` when the demo is built with `--features
-trace-stream`) and writes them to disk in either:
+perf-trace`) and writes them to disk in either:
 
   - JSON array  — single `[ev, ev, ...]` document, drag-drop loadable
                   in https://ui.perfetto.dev. Default. Buffered until

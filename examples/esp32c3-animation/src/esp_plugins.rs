@@ -1,6 +1,7 @@
 use mirui::app::{App, RendererFactory};
 use mirui::ecs::MonoClock;
 use mirui::plugin::Plugin;
+#[cfg(feature = "perf-fps")]
 use mirui::plugins::FpsSummary;
 use mirui::surface::Surface;
 
@@ -35,6 +36,7 @@ where
 /// `FpsSummaryPlugin` sink. Side effect: writes `crate::FPS_DISPLAY`
 /// for the LCD overlay. Per-span detail and Chrome-trace JSON come
 /// from `PerfReportPlugin` instead of being re-implemented here.
+#[cfg(feature = "perf-fps")]
 pub fn esp_perf_sink(report: FpsSummary<'_>) {
     let fps = if report.avg_frame_ns == 0 {
         0
@@ -70,6 +72,7 @@ pub fn esp_perf_sink(report: FpsSummary<'_>) {
 }
 
 /// `PerfReportPlugin` sink — per-span aggregates over `esp_println`.
+#[cfg(feature = "perf-fps")]
 pub fn esp_span_report_sink(report: &mirui::plugins::PerfReport) {
     for s in &report.stage_stats {
         if s.count == 0 {
@@ -83,18 +86,39 @@ pub fn esp_span_report_sink(report: &mirui::plugins::PerfReport) {
             s.max_ns / 1000,
         );
     }
+    for s in &report.systems {
+        if s.call_count == 0 {
+            continue;
+        }
+        esp_println::println!(
+            "[sys ] {:24} count {:>5}  avg {:>5}us  last {:>5}us",
+            s.name,
+            s.call_count,
+            s.avg_us,
+            s.last_us,
+        );
+    }
 }
 
 /// `[trace]` prefix is what `tools/esp-trace.py` greps for.
-#[cfg(feature = "trace-stream")]
+#[cfg(feature = "perf-trace")]
 pub fn esp_perfetto_box() -> mirui::plugins::PerfettoLineSink {
-    alloc::boxed::Box::new(|line: &str| {
-        esp_println::println!("[trace] {}", line);
+    alloc::boxed::Box::new(|batch: &str| {
+        // One esp_println per frame instead of per event — each call
+        // walks a critical section + USB Serial-JTAG FIFO flush.
+        let mut out = alloc::string::String::with_capacity(batch.len() + 64);
+        for line in batch.lines() {
+            out.push_str("[trace] ");
+            out.push_str(line);
+            out.push('\n');
+        }
+        esp_println::print!("{}", out);
     })
 }
 
 /// `BudgetReportPlugin` sink: prints over esp_println and bumps the
 /// LCD overlay counter (red `<n>!` line under the fps readout).
+#[cfg(feature = "perf-fps")]
 pub fn esp_budget_sink(v: mirui::plugins::BudgetViolation) {
     esp_println::println!(
         "[budget] avg {}us (budget {}us) p99 {}us (budget {}us) jitter {}us",
