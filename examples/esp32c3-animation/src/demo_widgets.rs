@@ -357,16 +357,16 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             SimAction::drag(
                 DimPoint::percent(50, 80),
                 DimPoint::percent(50, 20),
-                300,
-                ease::ease_in_out_cubic,
+                100,
+                ease::linear,
             )
             .on(list_drag_anchor),
             SimAction::wait(800),
             SimAction::drag(
                 DimPoint::percent(50, 20),
                 DimPoint::percent(50, 80),
-                300,
-                ease::ease_in_out_cubic,
+                100,
+                ease::linear,
             )
             .on(list_drag_anchor),
             SimAction::wait(800),
