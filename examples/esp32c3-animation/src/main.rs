@@ -47,7 +47,7 @@ mod esp_plugins;
 #[cfg(feature = "esp-test-offscreen")]
 mod esp_test_offscreen;
 
-use board::{H, St7735, W, systimer_now};
+use board::{H, St7735, W};
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
@@ -110,9 +110,6 @@ pub fn budget_violations_inc() {
         cell.set(cell.get().saturating_add(1));
     });
 }
-
-#[cfg(feature = "app-demo")]
-static mut FLUSH_ACC: u32 = 0;
 
 #[cfg(feature = "app-demo")]
 pub struct FrameCounter(pub u32);
@@ -218,8 +215,6 @@ fn run_normal() -> ! {
     const CAPTURE_EVERY: u32 = 1_000_000;
 
     let flush_cb = move |buf: &[u8], area: &Rect| {
-        #[cfg(feature = "app-demo")]
-        let ft0 = systimer_now();
         let (x0, y0, x1, y1) = area.pixel_bounds();
         let x = x0.max(0) as u16;
         let y = y0.max(0) as u16;
@@ -257,13 +252,6 @@ fn run_normal() -> ! {
             let violations = budget_violations_load();
             board::draw_perf_overlay(&mut lcd, fps, violations);
         }
-        #[cfg(feature = "app-demo")]
-        {
-            let ft1 = systimer_now();
-            unsafe {
-                FLUSH_ACC = FLUSH_ACC.wrapping_add(ft1.wrapping_sub(ft0));
-            }
-        }
     };
 
     // -----------------------------------------------------------------
@@ -285,12 +273,12 @@ fn run_normal() -> ! {
         #[cfg(feature = "demo-butterfly")]
         let (mut demo, tag) = (demo_butterfly::ButterflyDemo::new(), "butterfly");
 
-        let mut last_report = systimer_now();
+        let mut last_report = board::systimer_now();
         let mut frame_count: u32 = 0;
         loop {
             demo.step(&mut fb);
             frame_count += 1;
-            let now = systimer_now();
+            let now = board::systimer_now();
             if now.wrapping_sub(last_report) >= 160_000_000 {
                 esp_println::println!("[{}] fps={}", tag, frame_count);
                 #[cfg(feature = "fps-overlay")]
