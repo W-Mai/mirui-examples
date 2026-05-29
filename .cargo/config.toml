@@ -1,0 +1,30 @@
+# Workspace-level cargo config for mirui-examples.
+#
+# This file is committed and applies to every cargo invocation under
+# this directory tree (cargo walks up from the crate's Cargo.toml).
+# Per-target build settings live in each example's
+# `examples/<name>/.cargo/config.toml` instead.
+#
+# ───────────────────────────────────────────────────────────────────
+# Local development against a sibling mirui working tree
+# ───────────────────────────────────────────────────────────────────
+#
+# To point this repo at a local mirui checkout (instead of pulling
+# mirui from its git source), uncomment the block below, fix the
+# paths to your layout, and tell git to ignore your edits to this
+# file:
+#
+#     git update-index --skip-worktree .cargo/config.toml
+#
+# To start tracking edits to this file again (e.g. to commit a new
+# alias or a target setting):
+#
+#     git update-index --no-skip-worktree .cargo/config.toml
+#
+# `paths` overrides emit a deprecation warning at build time but
+# remain stable; `[patch]` cannot live in `.cargo/config.toml`.
+#
+# paths = [
+#     "../miru",
+#     "../miru/mirui-macros",
+# ]

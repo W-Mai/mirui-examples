@@ -49,6 +49,34 @@ espflash flash target/riscv32imc-unknown-none-elf/release/mirui-esp32c3 \
 
 > Serial port name may vary. Use `ls /dev/cu.usb*` to find yours.
 
+## Local mirui Development
+
+By default this repo pulls `mirui` and `mirui-macros` from their
+published git source — anyone can `git clone` and `cargo build` without
+a sibling mirui checkout. To work against an unpublished mirui
+working tree (e.g. while iterating on framework code in `../miru`),
+edit the workspace-level `.cargo/config.toml` and uncomment the
+`paths` override at the bottom of the file. The exact paths depend on
+your layout; the defaults assume mirui sits next to this repo.
+
+After editing, tell git to ignore your local changes to that file so
+they don't get committed by accident:
+
+```bash
+git update-index --skip-worktree .cargo/config.toml
+```
+
+To resume tracking edits (e.g. to commit a new shared alias or build
+setting), reverse it:
+
+```bash
+git update-index --no-skip-worktree .cargo/config.toml
+```
+
+`cargo build` will warn that `paths` overrides are deprecated; that's
+expected and harmless. The override only affects builds in this
+repo's tree.
+
 ## Examples
 
 | Directory | Description |
