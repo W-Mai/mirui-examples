@@ -1,0 +1,8 @@
+# NuttX kbuild artifacts
+.built
+.context
+.depend
+.kconfig
+Make.dep
+*.o
+*.a

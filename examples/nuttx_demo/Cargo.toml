@@ -1,0 +1,29 @@
+[package]
+name = "nuttx_demo"
+version = "0.0.1"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["staticlib"]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+lto = true
+codegen-units = 1
+opt-level = "z"
+
+[dependencies]
+mirui = { git = "https://github.com/W-Mai/mirui.git", default-features = false, features = ["nuttx"] }
+mirui-macros = { git = "https://github.com/W-Mai/mirui.git" }
+libc = { version = "0.2", default-features = false }
+nuttx = { git = "https://github.com/no1wudi/nuttx-rs.git", branch = "master" }
+
+# Local development against a sibling mirui checkout: uncomment to build
+# against ../../../miru instead of the git source above.
+# [patch."https://github.com/W-Mai/mirui.git"]
+# mirui = { path = "../../../miru" }
+# mirui-macros = { path = "../../../miru/mirui-macros" }

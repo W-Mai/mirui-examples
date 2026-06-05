@@ -1,0 +1,38 @@
+#
+# Kconfig for mirui-nuttx-demo. Drop into NuttX apps tree as a symlink
+# under `apps/external/mirui-nuttx-demo` and `make menuconfig` picks it
+# up automatically.
+#
+
+config EXAMPLES_RUST_MIRUI_DEMO
+	tristate "mirui Rust UI demo"
+	default n
+	---help---
+		mirui (https://github.com/W-Mai/mirui) Rust UI framework demo.
+		Targets /dev/fb0 + /dev/inputN with software-rendered widgets,
+		gesture recognition, and theming.
+
+		Reference board: rv-virt:nsh under qemu-system-riscv32.
+
+		Required CONFIGs (enable manually before turning this on):
+		  CONFIG_VIDEO_FB, CONFIG_INPUT, CONFIG_DEV_URANDOM,
+		  CONFIG_TLS_NELEM (>=16), CONFIG_FS_LARGEFILE.
+
+if EXAMPLES_RUST_MIRUI_DEMO
+
+config EXAMPLES_RUST_MIRUI_DEMO_PROGNAME
+	string "Program name"
+	default "mirui"
+
+config EXAMPLES_RUST_MIRUI_DEMO_PRIORITY
+	int "Task priority"
+	default 100
+
+config EXAMPLES_RUST_MIRUI_DEMO_STACKSIZE
+	int "Stack size"
+	default 32768
+	---help---
+		8 KiB minimum based on the slint / hello rust precedent.
+		Smaller stacks deadlock libstd's TLS init.
+
+endif

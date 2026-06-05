@@ -1,0 +1,22 @@
+############################################################################
+# nuttx-demo/Make.defs — symlinked into NuttX apps tree under
+# `apps/external/mirui-nuttx-demo`. Mirrors `apps/examples/rust/slint`'s
+# build glue so `RUST_CARGO_BUILD` / `RUST_GET_BINDIR` from
+# `apps/tools/Rust.mk` find this crate.
+#
+# MIRUI_NUTTX_DEMO_DIR — directory **containing** mirui-nuttx-demo (i.e.
+# parent of its Cargo.toml). Defaults to the real mirui-examples checkout
+# next to this NuttX worktree (`<workspace>/../mirui-examples/examples/`)
+# so cargo's `path = "../../../miru"` in Cargo.toml resolves correctly
+# (cargo does NOT follow symlinks, so the symlink-only setup breaks).
+# Override via env or board makefile if your layout differs.
+############################################################################
+
+include $(APPDIR)/tools/Rust.mk
+
+MIRUI_NUTTX_DEMO_DIR ?= $(realpath $(APPDIR)/external/nuttx_demo/..)
+
+ifneq ($(CONFIG_EXAMPLES_RUST_MIRUI_DEMO),)
+CONFIGURED_APPS += $(APPDIR)/external/nuttx_demo
+EXTRA_LIBS += $(call RUST_GET_BINDIR,nuttx_demo,$(MIRUI_NUTTX_DEMO_DIR))
+endif
