@@ -325,18 +325,18 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(
             world: world
         :)
 
-        content (direction: FlexDirection::Column, grow: 1.0) {
-            header (
+        View (direction: FlexDirection::Column, grow: 1.0) {
+            View (
                 bg_color: Color::rgb(88, 166, 255),
                 height: 20,
                 text: "mirui",
                 border_radius: 3
             ) {}
-            row (direction: FlexDirection::Row, grow: 1.0) {
-                left (bg_color: Color::rgb(63, 185, 80), grow: 1.0) {}
-                right (bg_color: Color::rgb(248, 81, 73), grow: 1.0) {}
+            Row (direction: FlexDirection::Row, grow: 1.0) {
+                View (bg_color: Color::rgb(63, 185, 80), grow: 1.0) {}
+                View (bg_color: Color::rgb(248, 81, 73), grow: 1.0) {}
             }
-            footer (bg_color: Color::rgb(210, 168, 255), height: 20, text: "n-body") {}
+            View (bg_color: Color::rgb(210, 168, 255), height: 20, text: "n-body") {}
         }
     };
 
@@ -365,7 +365,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(
         :)
 
         walk init_pos.iter() with pos {
-            body (
+            View (
                 position: Position::Absolute,
                 left: pos.0.to_int() - iw / 2,
                 top: pos.1.to_int() - ih / 2,

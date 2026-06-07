@@ -169,18 +169,18 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             world: &mut app.world
         :)
 
-        slider_track (
+        View (
             bg_color: Color::rgb(60, 60, 80),
             width: 108,
             height: 10,
             border_radius: 5
         ) {
-            fill_mask (
+            View (
                 width: 54,
                 height: 10,
                 clip_children: true
             ) {
-                fill_inner (
+                View (
                     bg_color: Color::rgb(88, 166, 255),
                     position: Position::Absolute,
                     left: 0,
@@ -190,7 +190,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
                     border_radius: 5
                 ) {}
             }
-            thumb (
+            View (
                 bg_color: Color::rgb(255, 255, 255),
                 position: Position::Absolute,
                 left: 49,
@@ -218,7 +218,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             world: &mut app.world
         :)
 
-        switch_track (
+        View (
             bg_color: Color::rgb(80, 80, 100),
             position: Position::Absolute,
             left: 10,
@@ -227,7 +227,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             height: 18,
             border_radius: 9
         ) {
-            sw_thumb (
+            View (
                 bg_color: Color::rgb(255, 255, 255),
                 position: Position::Absolute,
                 left: 2,

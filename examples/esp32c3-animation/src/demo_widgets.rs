@@ -138,28 +138,28 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             world: &mut app.world
         :)
 
-        tabs (
+        View (
             bg_color: ColorToken::SurfaceVariant,
             width: 128,
             height: 14
         ) [
             TabBar::new(3).with_indicator_height(2),
         ] {
-            tab0 (
+            View (
                 text: "List",
                 text_color: ColorToken::OnSurface,
                 grow: 1.0,
                 align: AlignItems::Center,
                 justify: JustifyContent::Center
             ) {}
-            tab1 (
+            View (
                 text: "Form",
                 text_color: ColorToken::OnSurface,
                 grow: 1.0,
                 align: AlignItems::Center,
                 justify: JustifyContent::Center
             ) {}
-            tab2 (
+            View (
                 text: "Thm",
                 text_color: ColorToken::OnSurface,
                 grow: 1.0,
@@ -176,7 +176,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             world: &mut app.world
         :)
 
-        list (
+        View (
             bg_color: ColorToken::Surface,
             width: 128,
             height: 114
@@ -199,7 +199,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             },
         ] {
             walk 0..POOL_SIZE with _i {
-                row (
+                Row (
                     bg_color: ColorToken::SurfaceVariant,
                     text_color: ColorToken::OnSurface,
                     position: Position::Absolute,
@@ -225,7 +225,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             world: &mut app.world
         :)
 
-        form_page (
+        View (
             bg_color: ColorToken::Surface,
             width: 128,
             height: 114,
@@ -237,37 +237,37 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
                 index: 1,
             },
         ] {
-            enable_row (
+            View (
                 direction: FlexDirection::Row,
                 height: 28,
                 align: AlignItems::Center
             ) {
-                enable_label (text: "Enable", text_color: ColorToken::OnSurface, grow: 1.0) {}
-                enable_switch (width: 40, height: 20) [
+                View (text: "Enable", text_color: ColorToken::OnSurface, grow: 1.0) {}
+                View (width: 40, height: 20) [
                     Switch::new(),
                     OffscreenRender::default(),
                 ] {}
             }
-            slider_row (
+            View (
                 height: 14,
                 padding: Padding {
                     top: Dimension::px(6),
                     ..Default::default()
                 }
             ) {
-                value_slider (width: 108, height: 14) [
+                View (width: 108, height: 14) [
                     Slider::new(Fixed::ZERO, Fixed::from_int(100)),
                     FormSlider,
                 ] {}
             }
-            progress_row (
+            View (
                 height: 10,
                 padding: Padding {
                     top: Dimension::px(8),
                     ..Default::default()
                 }
             ) {
-                value_progress (width: 108, height: 8, border_radius: 4) [
+                View (width: 108, height: 8, border_radius: 4) [
                     ProgressBar::new(),
                     FormProgress,
                 ] {}
@@ -284,7 +284,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             world: &mut app.world
         :)
 
-        theme_page (
+        View (
             bg_color: ColorToken::Surface,
             width: 128,
             height: 114,
@@ -297,9 +297,9 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
                 index: 2,
             },
         ] {
-            primary_label (text: "Primary", text_color: ColorToken::OnSurface, height: 14) {}
-            primary_block (width: 80, height: 18, bg_color: ColorToken::Primary, border_radius: 4) {}
-            accent_label (
+            View (text: "Primary", text_color: ColorToken::OnSurface, height: 14) {}
+            View (width: 80, height: 18, bg_color: ColorToken::Primary, border_radius: 4) {}
+            View (
                 text: "accent (custom)",
                 text_color: ColorToken::OnSurfaceVariant,
                 height: 12,
@@ -308,7 +308,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
                     ..Default::default()
                 }
             ) {}
-            accent_block (width: 80, height: 18, bg_color: ACCENT, border_radius: 4) {}
+            View (width: 80, height: 18, bg_color: ACCENT, border_radius: 4) {}
         }
     };
 

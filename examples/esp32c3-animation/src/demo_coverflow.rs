@@ -143,7 +143,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             world: world
         :)
 
-        carousel (
+        View (
             position: Position::Absolute,
             left: 0,
             top: 0,
@@ -165,7 +165,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
             },
         ] {
             walk card_colors_ref.iter().enumerate() with item {
-                card (
+                View (
                     position: Position::Absolute,
                     left: 0,
                     top: 0,
@@ -177,7 +177,7 @@ pub fn setup<B: mirui::surface::FramebufferAccess>(app: &mut App<B>) {
                     CarouselCard { index: item.0 },
                 ] {
                     if item.0 % 2 == 1 {
-                        thumb (
+                        View (
                             position: Position::Absolute,
                             left: 4,
                             top: 4,

@@ -49,7 +49,7 @@ pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
     ui! {
         :( parent: root world: &mut app.world :)
 
-        backdrop (
+        View (
             position: Position::Absolute,
             left: 0,
             top: 0,
@@ -58,7 +58,7 @@ pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
         ) {
             walk 0..3i32 with row {
                 walk 0..4i32 with col {
-                    tile (
+                    View (
                         bg_color: tile_color(row, col),
                         position: Position::Absolute,
                         left: col * 32,
@@ -74,7 +74,7 @@ pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
     let m_source = ui! {
         :( parent: root world: &mut app.world :)
 
-        m_source (
+        View (
             bg_color: Color::rgb(80, 160, 255),
             position: Position::Absolute,
             left: 8,
@@ -87,7 +87,7 @@ pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
     ui! {
         :( parent: root world: &mut app.world :)
 
-        m_mirror (
+        View (
             position: Position::Absolute,
             left: 8,
             top: 24,
@@ -101,7 +101,7 @@ pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
     ui! {
         :( parent: root world: &mut app.world :)
 
-        caption (
+        View (
             text: "BlurMeBlurMe",
             position: Position::Absolute,
             left: 8,
@@ -116,7 +116,7 @@ pub fn setup(app: &mut App<impl mirui::surface::FramebufferAccess>) {
     ui! {
         :( parent: root world: &mut app.world :)
 
-        glass (
+        View (
             bg_color: Color::rgba(255, 255, 255, 50),
             border_radius: Fixed::from_int(6),
             position: Position::Absolute,
