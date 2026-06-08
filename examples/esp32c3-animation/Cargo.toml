@@ -55,9 +55,11 @@ demo-gesture = ["app-demo"]
 demo-widgets = ["app-demo"]
 demo-effects = ["app-demo"]     # Mirror + BackgroundBlur over a tile grid.
 
-# Standalone demos that drive FramebufSurface directly, no ECS.
-demo-shapes = []
-demo-butterfly = []
+# shapes and butterfly used to drive FramebufSurface directly; from
+# v0.28 they sit inside mirui::gallery::demos as Canvas-style custom
+# Views and run on top of mirui::App like every other demo.
+demo-shapes = ["app-demo"]
+demo-butterfly = ["app-demo"]
 # HiDPI downscale: physical framebuffer stays at 128×128, logical space
 # expands to 256×256 (scale = 0.5). Layout is written in logical units;
 # the backend downsamples during rasterization. Pairs with demo-threebody
@@ -81,7 +83,7 @@ esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c3"] }
 # `default-features = false` drops quad-aa — the 2×2 supersample costs
 # ~7 ms/frame on cover-flow (33 fps → 27 fps) which the C3 can't spare.
 # Flip it back on for demos that care about edge quality more than fps.
-mirui = { git = "https://github.com/W-Mai/mirui.git", default-features = false }
+mirui = { git = "https://github.com/W-Mai/mirui.git", default-features = false, features = ["gallery"] }
 mirui-macros = { git = "https://github.com/W-Mai/mirui.git" }
 critical-section = "1.2"
 

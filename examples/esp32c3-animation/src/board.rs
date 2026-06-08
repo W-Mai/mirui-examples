@@ -118,6 +118,7 @@ pub fn delay_ms(ms: u32) {
 /// for any wall-clock measurement that must agree with `MonoClock`.
 /// Kept for legacy demos that compare deltas (relative monotonic
 /// counter, not absolute time).
+#[allow(dead_code)]
 pub fn systimer_now() -> u32 {
     let val: u32;
     unsafe { core::arch::asm!("csrr {}, 0x7E2", out(reg) val) };

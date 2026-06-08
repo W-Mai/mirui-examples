@@ -19,29 +19,11 @@ use esp_hal::time::Rate;
 #[cfg(feature = "app-demo")]
 use mirui::prelude::{App, World};
 use mirui::surface::framebuf::FramebufSurface;
+#[cfg(feature = "app-demo")]
+use mirui::surface::Surface;
 use mirui::types::Rect;
 
 mod board;
-#[cfg(feature = "demo-butterfly")]
-mod demo_butterfly;
-#[cfg(feature = "demo-coverflow")]
-mod demo_coverflow;
-#[cfg(feature = "demo-effects")]
-mod demo_effects;
-#[cfg(feature = "demo-flipcard")]
-mod demo_flipcard;
-#[cfg(feature = "demo-gesture")]
-mod demo_gesture;
-#[cfg(feature = "demo-particles")]
-mod demo_particles;
-#[cfg(feature = "demo-shapes")]
-mod demo_shapes;
-#[cfg(feature = "demo-subpixel")]
-mod demo_subpixel;
-#[cfg(feature = "demo-threebody")]
-mod demo_threebody;
-#[cfg(feature = "demo-widgets")]
-mod demo_widgets;
 #[cfg(feature = "app-demo")]
 mod esp_plugins;
 #[cfg(feature = "esp-test-offscreen")]
@@ -254,42 +236,7 @@ fn run_normal() -> ! {
         }
     };
 
-    // -----------------------------------------------------------------
-    // Direct-driver demos (`demo-shapes` / `demo-butterfly`): own their
-    // frame loop, don't touch mirui::App. They take a FramebufSurface
-    // and step per frame; FPS reporting is done on the loop side, not
-    // through the ECS.
-    // -----------------------------------------------------------------
-    #[cfg(not(feature = "app-demo"))]
-    {
-        let mut fb = FramebufSurface::with_format(
-            W,
-            H,
-            mirui::draw::texture::ColorFormat::RGB565Swapped,
-            flush_cb,
-        );
-        #[cfg(feature = "demo-shapes")]
-        let (mut demo, tag) = (demo_shapes::ShapesDemo::new(), "shapes");
-        #[cfg(feature = "demo-butterfly")]
-        let (mut demo, tag) = (demo_butterfly::ButterflyDemo::new(), "butterfly");
 
-        let mut last_report = board::systimer_now();
-        let mut frame_count: u32 = 0;
-        loop {
-            demo.step(&mut fb);
-            frame_count += 1;
-            let now = board::systimer_now();
-            if now.wrapping_sub(last_report) >= 160_000_000 {
-                esp_println::println!("[{}] fps={}", tag, frame_count);
-                #[cfg(feature = "fps-overlay")]
-                unsafe {
-                    FPS_DISPLAY = frame_count;
-                }
-                frame_count = 0;
-                last_report = now;
-            }
-        }
-    }
 
     // -----------------------------------------------------------------
     // mirui::App-based demos: build the backend with HiDPI options if
@@ -325,43 +272,125 @@ fn run_normal() -> ! {
         let mut app = App::new(backend);
         app.with_default_widgets().with_default_systems();
 
+        // SystimerClockPlugin populates MonoClock; gallery demos read it
+        // during build_widgets to seed time-driven animations.
+        app.add_plugin(esp_plugins::SystimerClockPlugin);
         app.add_system(frame_counter_system::system());
         app.world.insert_resource(FrameCounter(0));
 
-        // HiDPI downscale doubles the logical viewport (128 → 256),
-        // upscale halves it (128 → 64); both shift the demo tuning.
-        #[cfg(all(
-            feature = "demo-threebody",
-            not(any(feature = "demo-hidpi-downscale", feature = "demo-hidpi-upscale"))
-        ))]
-        demo_threebody::setup(&mut app, 3, mirui::types::Fixed::from_int(30));
-        #[cfg(all(feature = "demo-threebody", feature = "demo-hidpi-downscale"))]
-        demo_threebody::setup(&mut app, 6, mirui::types::Fixed::from_int(60));
-        #[cfg(all(feature = "demo-threebody", feature = "demo-hidpi-upscale"))]
-        demo_threebody::setup(&mut app, 3, mirui::types::Fixed::from_int(15));
+        let logical_w = app.backend.display_info().width;
+        let logical_h = app.backend.display_info().height;
+
+        #[cfg(feature = "demo-threebody")]
+        {
+            use mirui::gallery::demos::three_body;
+            #[cfg(not(any(feature = "demo-hidpi-downscale", feature = "demo-hidpi-upscale")))]
+            let (n_bodies, eq) = (3, mirui::types::Fixed::from_int(30));
+            #[cfg(feature = "demo-hidpi-downscale")]
+            let (n_bodies, eq) = (6, mirui::types::Fixed::from_int(60));
+            #[cfg(feature = "demo-hidpi-upscale")]
+            let (n_bodies, eq) = (3, mirui::types::Fixed::from_int(15));
+            app.add_system(three_body::physics_tick_system::system());
+            app.add_system(three_body::kick_system::system());
+            app.add_system(three_body::sync_layout_system::system());
+            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            three_body::build_widgets(&mut app.world, parent, logical_w, logical_h, n_bodies, eq);
+            app.set_root(parent);
+        }
 
         #[cfg(feature = "demo-subpixel")]
-        demo_subpixel::setup(&mut app);
+        {
+            use mirui::gallery::demos::subpixel;
+            app.add_system(subpixel::bar_move_system::system());
+            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            subpixel::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            app.set_root(parent);
+        }
 
         #[cfg(feature = "demo-particles")]
-        demo_particles::setup(&mut app);
+        {
+            use mirui::gallery::demos::particles;
+            app.add_system(particles::particle_system::system());
+            app.add_system(particles::pulse_ring_system::system());
+            app.add_system(particles::bar_system::system());
+            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            particles::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            app.set_root(parent);
+        }
 
         #[cfg(feature = "demo-flipcard")]
-        demo_flipcard::setup(&mut app);
+        {
+            use mirui::gallery::demos::flip_card;
+            app.add_system(flip_card::flip_system::system());
+            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            flip_card::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            app.set_root(parent);
+        }
 
         #[cfg(feature = "demo-coverflow")]
-        demo_coverflow::setup(&mut app);
+        {
+            use mirui::gallery::demos::cover_flow;
+            app.add_system(cover_flow::layout_system::system());
+            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            cover_flow::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            app.set_root(parent);
+        }
 
+        // demo-gesture: ESP's old hand-rolled Slider/Switch handler is
+        // superseded by internal gesture in v0.27.2+. Routes to slider_switch.
         #[cfg(feature = "demo-gesture")]
-        demo_gesture::setup(&mut app);
+        {
+            use mirui::gallery::demos::slider_switch;
+            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            slider_switch::build_widgets(&mut app.world, parent);
+            app.set_root(parent);
+        }
 
         #[cfg(feature = "demo-widgets")]
-        demo_widgets::setup(&mut app);
+        {
+            use mirui::gallery::demos::widgets;
+            app.add_plugin(mirui::plugins::InputFeedbackPlugin::default());
+            app.with_offscreen_pool_budget(32 * 1024);
+            app.add_system(mirui::event::sim::sim_timeline_system::system());
+            app.add_system(widgets::slider_to_progress_system::system());
+            app.world.insert_resource(widgets::dark_with_accent());
+            let cycle_e = widgets::Cycle::install(&mut app.world);
+            app.world.insert(cycle_e, widgets::ThemeCycleIndex(0));
+            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            widgets::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            app.set_root(parent);
+        }
 
         #[cfg(feature = "demo-effects")]
-        demo_effects::setup(&mut app);
+        {
+            use mirui::gallery::demos::effect;
+            app.add_system(effect::animate_x::system());
+            app.add_system(effect::animate_color_flash::system());
+            app.with_offscreen_pool_budget(1024 * 1024);
+            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            effect::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            app.set_root(parent);
+        }
 
-        app.add_plugin(esp_plugins::SystimerClockPlugin);
+        #[cfg(feature = "demo-shapes")]
+        {
+            use mirui::gallery::demos::shapes;
+            app.with_widget(shapes::shapes_view());
+            app.add_system(shapes::shapes_anim_system::system());
+            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            shapes::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            app.set_root(parent);
+        }
+
+        #[cfg(feature = "demo-butterfly")]
+        {
+            use mirui::gallery::demos::butterfly;
+            app.with_widget(butterfly::butterfly_view());
+            app.add_system(butterfly::butterfly_anim_system::system());
+            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            butterfly::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            app.set_root(parent);
+        }
 
         #[cfg(feature = "perf-fps")]
         {
