@@ -363,12 +363,21 @@ fn run_normal() -> ! {
 
         #[cfg(feature = "demo-effects")]
         {
-            use mirui::gallery::demos::effect;
-            app.add_system(effect::animate_x::system());
-            app.add_system(effect::animate_color_flash::system());
-            app.with_offscreen_pool_budget(1024 * 1024);
+            use mirui::ecs;
+            use mirui::gallery::demos::effect_glass;
+            app.add_system(ecs::System::new(
+                "glass_x",
+                ecs::run_order::ANIMATION,
+                effect_glass::GlassX::system(),
+            ));
+            app.add_system(ecs::System::new(
+                "gauss_radius",
+                ecs::run_order::ANIMATION,
+                effect_glass::GaussRadius::system(),
+            ));
+            app.with_offscreen_pool_budget(8 * 1024);
             let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
-            effect::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            effect_glass::build_widgets(&mut app.world, parent, logical_w, logical_h);
             app.set_root(parent);
         }
 
