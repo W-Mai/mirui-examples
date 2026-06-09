@@ -835,8 +835,8 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "mirui"
-version = "0.28.0"
-source = "git+https://github.com/W-Mai/mirui.git#18d24e6097637cf2d06f30e033653651b21b60be"
+version = "0.28.1"
+source = "git+https://github.com/W-Mai/mirui.git#4b8b990787a7eecd9483e76951ebf16a9029c034"
 dependencies = [
  "critical-section",
  "hashbrown 0.15.5",
@@ -859,8 +859,8 @@ dependencies = [
 
 [[package]]
 name = "mirui-macros"
-version = "0.28.0"
-source = "git+https://github.com/W-Mai/mirui.git#18d24e6097637cf2d06f30e033653651b21b60be"
+version = "0.28.1"
+source = "git+https://github.com/W-Mai/mirui.git#4b8b990787a7eecd9483e76951ebf16a9029c034"
 dependencies = [
  "proc-macro2",
  "quote",
