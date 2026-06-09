@@ -293,18 +293,16 @@ fn run_normal() -> ! {
             app.add_system(three_body::physics_tick_system::system());
             app.add_system(three_body::kick_system::system());
             app.add_system(three_body::sync_layout_system::system());
-            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            let parent = app.spawn_root().id();
             three_body::build_widgets(&mut app.world, parent, logical_w, logical_h, n_bodies, eq);
-            app.set_root(parent);
         }
 
         #[cfg(feature = "demo-subpixel")]
         {
             use mirui::gallery::demos::subpixel;
             app.add_system(subpixel::bar_move_system::system());
-            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            let parent = app.spawn_root().id();
             subpixel::build_widgets(&mut app.world, parent, logical_w, logical_h);
-            app.set_root(parent);
         }
 
         #[cfg(feature = "demo-particles")]
@@ -313,27 +311,24 @@ fn run_normal() -> ! {
             app.add_system(particles::particle_system::system());
             app.add_system(particles::pulse_ring_system::system());
             app.add_system(particles::bar_system::system());
-            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            let parent = app.spawn_root().id();
             particles::build_widgets(&mut app.world, parent, logical_w, logical_h);
-            app.set_root(parent);
         }
 
         #[cfg(feature = "demo-flipcard")]
         {
             use mirui::gallery::demos::flip_card;
             app.add_system(flip_card::flip_system::system());
-            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            let parent = app.spawn_root().id();
             flip_card::build_widgets(&mut app.world, parent, logical_w, logical_h);
-            app.set_root(parent);
         }
 
         #[cfg(feature = "demo-coverflow")]
         {
             use mirui::gallery::demos::cover_flow;
             app.add_system(cover_flow::layout_system::system());
-            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            let parent = app.spawn_root().id();
             cover_flow::build_widgets(&mut app.world, parent, logical_w, logical_h);
-            app.set_root(parent);
         }
 
         // demo-gesture: ESP's old hand-rolled Slider/Switch handler is
@@ -341,9 +336,8 @@ fn run_normal() -> ! {
         #[cfg(feature = "demo-gesture")]
         {
             use mirui::gallery::demos::slider_switch;
-            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            let parent = app.spawn_root().id();
             slider_switch::build_widgets(&mut app.world, parent);
-            app.set_root(parent);
         }
 
         #[cfg(feature = "demo-widgets")]
@@ -356,9 +350,8 @@ fn run_normal() -> ! {
             app.world.insert_resource(widgets::dark_with_accent());
             let cycle_e = widgets::Cycle::install(&mut app.world);
             app.world.insert(cycle_e, widgets::ThemeCycleIndex(0));
-            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            let parent = app.spawn_root().id();
             widgets::build_widgets(&mut app.world, parent, logical_w, logical_h);
-            app.set_root(parent);
         }
 
         #[cfg(feature = "demo-effects")]
@@ -376,9 +369,8 @@ fn run_normal() -> ! {
                 effect_glass::GaussRadius::system(),
             ));
             app.with_offscreen_pool_budget(8 * 1024);
-            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            let parent = app.spawn_root().id();
             effect_glass::build_widgets(&mut app.world, parent, logical_w, logical_h);
-            app.set_root(parent);
         }
 
         #[cfg(feature = "demo-shapes")]
@@ -386,9 +378,8 @@ fn run_normal() -> ! {
             use mirui::gallery::demos::shapes;
             app.with_widget(shapes::shapes_view());
             app.add_system(shapes::shapes_anim_system::system());
-            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            let parent = app.spawn_root().id();
             shapes::build_widgets(&mut app.world, parent, logical_w, logical_h);
-            app.set_root(parent);
         }
 
         #[cfg(feature = "demo-butterfly")]
@@ -396,9 +387,8 @@ fn run_normal() -> ! {
             use mirui::gallery::demos::butterfly;
             app.with_widget(butterfly::butterfly_view());
             app.add_system(butterfly::butterfly_anim_system::system());
-            let parent = mirui::widget::builder::WidgetBuilder::new(&mut app.world).id();
+            let parent = app.spawn_root().id();
             butterfly::build_widgets(&mut app.world, parent, logical_w, logical_h);
-            app.set_root(parent);
         }
 
         #[cfg(feature = "perf-fps")]
