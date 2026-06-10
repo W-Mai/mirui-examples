@@ -176,21 +176,21 @@ where
                 grow: 1.0,
                 align: AlignItems::Center,
                 justify: JustifyContent::Center
-            ) {}
+            )
             tab1 (
                 text: "Form",
                 text_color: ColorToken::OnSurface,
                 grow: 1.0,
                 align: AlignItems::Center,
                 justify: JustifyContent::Center
-            ) {}
+            )
             tab2 (
                 text: "Thm",
                 text_color: ColorToken::OnSurface,
                 grow: 1.0,
                 align: AlignItems::Center,
                 justify: JustifyContent::Center
-            ) {}
+            )
         }
     };
 
@@ -234,7 +234,7 @@ where
                     top: 0,
                     width: w_,
                     height: row_h_
-                ) {}
+                )
             }
         }
     };
@@ -271,11 +271,11 @@ where
                 height: 28 * scale_,
                 align: AlignItems::Center
             ) {
-                enable_label (text: "Enable", text_color: ColorToken::OnSurface, grow: 1.0) {}
+                enable_label (text: "Enable", text_color: ColorToken::OnSurface, grow: 1.0)
                 enable_switch (width: 40 * scale_, height: 20 * scale_) [
                     Switch::new(),
                     OffscreenRender::default(),
-                ] {}
+                ]
             }
             slider_row (
                 height: 14 * scale_,
@@ -287,7 +287,7 @@ where
                 value_slider (width: 108 * scale_, height: 14 * scale_) [
                     Slider::new(Fixed::ZERO, Fixed::from_int(100)),
                     FormSlider,
-                ] {}
+                ]
             }
             progress_row (
                 height: 10 * scale_,
@@ -296,10 +296,14 @@ where
                     ..Default::default()
                 }
             ) {
-                value_progress (width: 108 * scale_, height: 8 * scale_, border_radius: 4 * scale_ as u32) [
+                value_progress (
+                    width: 108 * scale_,
+                    height: 8 * scale_,
+                    border_radius: 4 * scale_ as u32
+                ) [
                     ProgressBar::new(),
                     FormProgress,
-                ] {}
+                ]
             }
         }
     };
@@ -326,8 +330,17 @@ where
                 index: 2,
             },
         ] {
-            primary_label (text: "Primary", text_color: ColorToken::OnSurface, height: 14 * scale_) {}
-            primary_block (width: 80 * scale_, height: 18 * scale_, bg_color: ColorToken::Primary, border_radius: 4 * scale_ as u32) {}
+            primary_label (
+                text: "Primary",
+                text_color: ColorToken::OnSurface,
+                height: 14 * scale_
+            )
+            primary_block (
+                width: 80 * scale_,
+                height: 18 * scale_,
+                bg_color: ColorToken::Primary,
+                border_radius: 4 * scale_ as u32
+            )
             accent_label (
                 text: "accent (custom)",
                 text_color: ColorToken::OnSurfaceVariant,
@@ -336,8 +349,13 @@ where
                     top: Dimension::px(8 * scale_),
                     ..Default::default()
                 }
-            ) {}
-            accent_block (width: 80 * scale_, height: 18 * scale_, bg_color: ACCENT, border_radius: 4 * scale_ as u32) {}
+            )
+            accent_block (
+                width: 80 * scale_,
+                height: 18 * scale_,
+                bg_color: ACCENT,
+                border_radius: 4 * scale_ as u32
+            )
         }
     };
 
