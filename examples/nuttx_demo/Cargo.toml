@@ -17,7 +17,7 @@ codegen-units = 1
 opt-level = "z"
 
 [dependencies]
-mirui = { git = "https://github.com/W-Mai/mirui.git", default-features = false, features = ["nuttx"] }
+mirui = { git = "https://github.com/W-Mai/mirui.git", default-features = false, features = ["nuttx", "gallery"] }
 mirui-macros = { git = "https://github.com/W-Mai/mirui.git" }
 libc = { version = "0.2", default-features = false }
 nuttx = { git = "https://github.com/no1wudi/nuttx-rs.git", branch = "master" }
