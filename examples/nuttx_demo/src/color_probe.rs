@@ -16,7 +16,10 @@ where
     let world = &mut app.world;
     let root = WidgetBuilder::new(world).id();
     ui! {
-        :( parent: root world: world :)
+        :(
+            parent: root
+            world: world
+        :)
         column (direction: FlexDirection::Column, grow: 1.0) {
             red    (bg_color: Color::rgb(255, 0,   0),   grow: 1.0) {}
             green  (bg_color: Color::rgb(0,   255, 0),   grow: 1.0) {}

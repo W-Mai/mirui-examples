@@ -76,7 +76,10 @@ where
         })
         .id();
     ui! {
-        :( parent: root world: world :)
+        :(
+            parent: root
+            world: world
+        :)
         column (direction: FlexDirection::Column, grow: 1.0) {
             title (
                 text: "mirui",
