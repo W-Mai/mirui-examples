@@ -835,8 +835,8 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "mirui"
-version = "0.28.3"
-source = "git+https://github.com/W-Mai/mirui.git#d9ff356ff3fd09b69e0c0c68c32e36ed4a3cf894"
+version = "0.29.1"
+source = "git+https://github.com/W-Mai/mirui.git#0da910b9d92a8075a53e5438fa8de0d1a302123e"
 dependencies = [
  "critical-section",
  "hashbrown 0.15.5",
@@ -859,8 +859,8 @@ dependencies = [
 
 [[package]]
 name = "mirui-macros"
-version = "0.28.3"
-source = "git+https://github.com/W-Mai/mirui.git#d9ff356ff3fd09b69e0c0c68c32e36ed4a3cf894"
+version = "0.29.1"
+source = "git+https://github.com/W-Mai/mirui.git#0da910b9d92a8075a53e5438fa8de0d1a302123e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1253,9 +1253,9 @@ dependencies = [
 
 [[package]]
 name = "xrune"
-version = "1.5.2"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75cb12ad01fa411dcab5c919322266b54a29de20cfdff48010ba644eb492bd74"
+checksum = "31ed5f95bddce1a838e2fbb14b5f990daa479e7d4e1594bf103fbcbdd4acdb5b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1266,9 +1266,9 @@ dependencies = [
 
 [[package]]
 name = "xrune-incant"
-version = "1.5.2"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad60ab5a58b08b2ccb67b76e3d3d42f601503403ee9f89b44802cc364a334387"
+checksum = "4d09d67b5c5e864a0f75e5b9bff745b721e30baea6633ab2e319aa7091146d44"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1278,9 +1278,9 @@ dependencies = [
 
 [[package]]
 name = "xrune-nexus"
-version = "1.5.2"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "149767fd65077544865ca129a59fbafbe93092856766799267601270097f43c6"
+checksum = "f96d947418648a623660059c9d0adce3eda915b7cebc42324bfe88f7b7c5a9e9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1290,9 +1290,9 @@ dependencies = [
 
 [[package]]
 name = "xrune-sigil"
-version = "1.5.2"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a96fe8def60b2dbd265968493ddfabf96b4588b00965903734277fdb9180ace"
+checksum = "ab2f44c44a6d0d7213eb0de41e2ecce4e801cabc3fc23ab1dd55326da87ebccb"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -60,6 +60,7 @@ demo-effects = ["app-demo"]     # Mirror + BackgroundBlur over a tile grid.
 # Views and run on top of mirui::App like every other demo.
 demo-shapes = ["app-demo"]
 demo-butterfly = ["app-demo"]
+demo-life = ["app-demo"]     # Conway's Game of Life on a toroidal grid.
 # HiDPI downscale: physical framebuffer stays at 128×128, logical space
 # expands to 256×256 (scale = 0.5). Layout is written in logical units;
 # the backend downsamples during rasterization. Pairs with demo-threebody

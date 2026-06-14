@@ -331,6 +331,15 @@ fn run_normal() -> ! {
             cover_flow::build_widgets(&mut app.world, parent, logical_w, logical_h);
         }
 
+        #[cfg(feature = "demo-life")]
+        {
+            use mirui::gallery::demos::life;
+            app.with_widget(life::life_view());
+            let parent = app.spawn_root().id();
+            life::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            life::LifeTick::install(&mut app.world);
+        }
+
         // demo-gesture: ESP's old hand-rolled Slider/Switch handler is
         // superseded by internal gesture in v0.27.2+. Routes to slider_switch.
         #[cfg(feature = "demo-gesture")]
