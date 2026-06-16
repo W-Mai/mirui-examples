@@ -286,6 +286,7 @@ fn run_normal() -> ! {
         // SystimerClockPlugin populates MonoClock; gallery demos read it
         // during build_widgets to seed time-driven animations.
         app.add_plugin(esp_plugins::SystimerClockPlugin);
+        app.add_plugin(mirui::plugins::ImageResourcesPlugin::default());
         app.add_system(frame_counter_system::system());
         app.world.insert_resource(FrameCounter(0));
 
@@ -313,7 +314,7 @@ fn run_normal() -> ! {
             use mirui::gallery::demos::subpixel;
             app.add_system(subpixel::bar_move_system::system());
             let parent = app.spawn_root().id();
-            subpixel::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            subpixel::build_widgets(&mut app.world, parent);
         }
 
         #[cfg(feature = "demo-particles")]
@@ -323,7 +324,7 @@ fn run_normal() -> ! {
             app.add_system(particles::pulse_ring_system::system());
             app.add_system(particles::bar_system::system());
             let parent = app.spawn_root().id();
-            particles::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            particles::build_widgets(&mut app.world, parent);
         }
 
         #[cfg(feature = "demo-flipcard")]
@@ -331,7 +332,7 @@ fn run_normal() -> ! {
             use mirui::gallery::demos::flip_card;
             app.add_system(flip_card::flip_system::system());
             let parent = app.spawn_root().id();
-            flip_card::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            flip_card::build_widgets(&mut app.world, parent);
         }
 
         #[cfg(feature = "demo-coverflow")]
@@ -378,11 +379,7 @@ fn run_normal() -> ! {
         {
             use mirui::ecs;
             use mirui::gallery::demos::effect_glass;
-            app.add_system(ecs::System::new(
-                "glass_x",
-                ecs::run_order::ANIMATION,
-                effect_glass::GlassX::system(),
-            ));
+            app.add_system(effect_glass::glass_slide_system::system());
             app.add_system(ecs::System::new(
                 "gauss_radius",
                 ecs::run_order::ANIMATION,
@@ -390,7 +387,7 @@ fn run_normal() -> ! {
             ));
             app.with_offscreen_pool_budget(8 * 1024);
             let parent = app.spawn_root().id();
-            effect_glass::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            effect_glass::build_widgets(&mut app.world, parent);
         }
 
         #[cfg(feature = "demo-shapes")]
@@ -399,7 +396,7 @@ fn run_normal() -> ! {
             app.with_widget(shapes::shapes_view());
             app.add_system(shapes::shapes_anim_system::system());
             let parent = app.spawn_root().id();
-            shapes::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            shapes::build_widgets(&mut app.world, parent);
         }
 
         #[cfg(feature = "demo-butterfly")]
@@ -408,7 +405,7 @@ fn run_normal() -> ! {
             app.with_widget(butterfly::butterfly_view());
             app.add_system(butterfly::butterfly_anim_system::system());
             let parent = app.spawn_root().id();
-            butterfly::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            butterfly::build_widgets(&mut app.world, parent);
         }
 
         #[cfg(feature = "perf-fps")]
