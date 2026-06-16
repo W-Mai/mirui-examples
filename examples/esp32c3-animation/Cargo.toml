@@ -77,7 +77,7 @@ demo-hidpi-upscale = []
 [dependencies]
 esp-hal = { version = "1.1.0", features = ["esp32c3", "unstable"] }
 embedded-hal = "1.0"
-esp-alloc = "0.7"
+embedded-alloc = { version = "0.7", default-features = false, features = ["tlsf"] }
 esp-println = { version = "0.14", features = ["esp32c3"] }
 esp-bootloader-esp-idf = { version = "0.5.0", features = ["esp32c3"] }
 # Perf baseline: mirui commit f280542 (160fps three-body, partial refresh).

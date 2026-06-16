@@ -3,7 +3,9 @@
 
 extern crate alloc;
 
-use esp_alloc as _;
+use core::mem::MaybeUninit;
+use core::ptr::addr_of_mut;
+use embedded_alloc::TlsfHeap;
 use esp_hal::dma::{DmaRxBuf, DmaTxBuf};
 use esp_hal::dma_buffers;
 use esp_hal::gpio::{Level, Output, OutputConfig};
@@ -135,9 +137,18 @@ fn frame_counter_system(world: &mut World) {
     }
 }
 
+#[global_allocator]
+static HEAP: TlsfHeap = TlsfHeap::empty();
+
+const HEAP_SIZE: usize = 200 * 1024;
+static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+
 #[esp_hal::main]
 fn main() -> ! {
-    esp_alloc::heap_allocator!(size: 200 * 1024);
+    unsafe {
+        // SAFETY: HEAP_MEM is a static buffer used only here, before any allocation.
+        HEAP.init(addr_of_mut!(HEAP_MEM) as usize, HEAP_SIZE);
+    }
 
     // Diagnostic harness short-circuits before peripherals — it doesn't
     // need SPI/LCD, just heap + UART (esp_println uses the boot UART
