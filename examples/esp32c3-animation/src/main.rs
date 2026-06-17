@@ -379,7 +379,11 @@ fn run_normal() -> ! {
         {
             use mirui::ecs;
             use mirui::gallery::demos::effect_glass;
-            app.add_system(effect_glass::glass_slide_system::system());
+            app.add_system(mirui::ecs::System::new(
+                "glass_x",
+                ecs::run_order::ANIMATION,
+                effect_glass::GlassX::system(),
+            ));
             app.add_system(ecs::System::new(
                 "gauss_radius",
                 ecs::run_order::ANIMATION,
