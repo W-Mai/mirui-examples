@@ -77,7 +77,7 @@ pub static mut FPS_DISPLAY: u32 = 0;
 
 // RV32IMC has no A extension, so AtomicU32::fetch_add fails to link.
 // One critical_section guard around a plain `Cell<u32>` is the
-// established polyfill (same shape mirui::perf uses).
+// established polyfill (same shape mirui::core::perf uses).
 #[cfg(feature = "fps-overlay")]
 pub static BUDGET_VIOLATIONS: critical_section::Mutex<core::cell::Cell<u32>> =
     critical_section::Mutex::new(core::cell::Cell::new(0));
@@ -109,7 +109,7 @@ fn frame_counter_system(world: &mut World) {
     };
     #[cfg(feature = "perf-plan-probe")]
     if _n.is_multiple_of(30) {
-        if let Some(p) = world.resource::<mirui::widget::render_system::LastDirtyRegions>() {
+        if let Some(p) = world.resource::<mirui::ui::render_system::LastDirtyRegions>() {
             for (i, r) in p.0.rects.iter().enumerate() {
                 esp_println::println!(
                     "[plan] f={} rect[{}] {}x{}@({},{})",
@@ -170,7 +170,7 @@ fn run_normal() -> ! {
 
     #[cfg(all(feature = "app-demo", feature = "perf-fps"))]
     unsafe {
-        mirui::draw::quad_perf::CLOCK = || board::systimer_now() as u64;
+        mirui::render::quad_perf::CLOCK = || board::systimer_now() as u64;
     }
 
     let (rx_buf, rx_desc, tx_buf, tx_desc) = dma_buffers!(32000);
@@ -261,7 +261,7 @@ fn run_normal() -> ! {
             W,
             H,
             mirui::types::Fixed::ONE / mirui::types::Fixed::from(2),
-            mirui::draw::texture::ColorFormat::RGB565Swapped,
+            mirui::render::texture::ColorFormat::RGB565Swapped,
             flush_cb,
         );
         #[cfg(feature = "demo-hidpi-upscale")]
@@ -269,14 +269,14 @@ fn run_normal() -> ! {
             W,
             H,
             mirui::types::Fixed::from(2),
-            mirui::draw::texture::ColorFormat::RGB565Swapped,
+            mirui::render::texture::ColorFormat::RGB565Swapped,
             flush_cb,
         );
         #[cfg(not(any(feature = "demo-hidpi-downscale", feature = "demo-hidpi-upscale")))]
         let backend = FramebufSurface::with_format(
             W,
             H,
-            mirui::draw::texture::ColorFormat::RGB565Swapped,
+            mirui::render::texture::ColorFormat::RGB565Swapped,
             flush_cb,
         );
 
@@ -286,7 +286,7 @@ fn run_normal() -> ! {
         // SystimerClockPlugin populates MonoClock; gallery demos read it
         // during build_widgets to seed time-driven animations.
         app.add_plugin(esp_plugins::SystimerClockPlugin);
-        app.add_plugin(mirui::plugins::ImageResourcesPlugin::default());
+        app.add_plugin(mirui::app::plugins::ImageResourcesPlugin::default());
         app.add_system(frame_counter_system::system());
         app.world.insert_resource(FrameCounter(0));
 
@@ -364,9 +364,9 @@ fn run_normal() -> ! {
         #[cfg(feature = "demo-widgets")]
         {
             use mirui::gallery::demos::widgets;
-            app.add_plugin(mirui::plugins::InputFeedbackPlugin::default());
+            app.add_plugin(mirui::app::plugins::InputFeedbackPlugin::default());
             app.with_offscreen_pool_budget(32 * 1024);
-            app.add_system(mirui::event::sim::sim_timeline_system::system());
+            app.add_system(mirui::input::event::sim::sim_timeline_system::system());
             app.add_system(widgets::slider_to_progress_system::system());
             app.world.insert_resource(widgets::dark_with_accent());
             let cycle_e = widgets::Cycle::install(&mut app.world);
@@ -414,17 +414,17 @@ fn run_normal() -> ! {
 
         #[cfg(feature = "perf-fps")]
         {
-            let perf_report = mirui::plugins::PerfReportPlugin::new(100)
+            let perf_report = mirui::app::plugins::PerfReportPlugin::new(100)
                 .with_sink(esp_plugins::esp_span_report_sink);
             #[cfg(feature = "perf-trace")]
             let perf_report = perf_report.with_perfetto_line_sink(esp_plugins::esp_perfetto_box());
             // Budget +20% above measured baseline.
-            let budget = mirui::plugins::BudgetReportPlugin::new(100)
+            let budget = mirui::app::plugins::BudgetReportPlugin::new(100)
                 .with_avg_budget(17_000_000)
                 .with_p99_budget(22_000_000)
                 .with_sink(esp_plugins::esp_budget_sink);
             app.add_plugin(
-                mirui::plugins::FpsSummaryPlugin::new(100).with_sink(esp_plugins::esp_perf_sink),
+                mirui::app::plugins::FpsSummaryPlugin::new(100).with_sink(esp_plugins::esp_perf_sink),
             )
             .add_plugin(perf_report)
             .add_plugin(budget);

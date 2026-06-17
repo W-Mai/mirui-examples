@@ -7,14 +7,14 @@
 //! cycle).
 
 use mirui::app::{App, RendererFactory};
-use mirui::components::{ProgressBar, Slider, Switch};
+use mirui::ui::widgets::{ProgressBar, Slider, Switch};
 use mirui::ecs::Entity;
-use mirui::plugins::StdInstantClockPlugin;
+use mirui::app::plugins::StdInstantClockPlugin;
 use mirui::prelude::*;
 use mirui::surface::Surface;
 use mirui::types::Fixed;
-use mirui::widget::theme::{self, ColorToken};
-use mirui::widget::Theme;
+use mirui::ui::theme::{self, ColorToken};
+use mirui::ui::Theme;
 use mirui_macros::ui;
 
 const ACCENT: ColorToken = ColorToken::custom("accent");

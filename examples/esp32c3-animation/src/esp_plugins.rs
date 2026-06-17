@@ -1,8 +1,8 @@
 use mirui::app::{App, RendererFactory};
 use mirui::ecs::MonoClock;
-use mirui::plugin::Plugin;
+use mirui::app::plugin::Plugin;
 #[cfg(feature = "perf-fps")]
-use mirui::plugins::FpsSummary;
+use mirui::app::plugins::FpsSummary;
 use mirui::surface::Surface;
 
 // esp_hal Instant uses the full 52-bit systimer; csr 0x7E2 wraps
@@ -18,7 +18,7 @@ fn esp_clock_ns() -> u64 {
 ///
 /// **Inserts**
 /// - resource: `MonoClock`
-/// - global: calls `mirui::perf::set_clock` so `trace_span!` records
+/// - global: calls `mirui::core::perf::set_clock` so `trace_span!` records
 #[derive(Default)]
 pub struct SystimerClockPlugin;
 
@@ -29,7 +29,7 @@ where
 {
     fn build(&mut self, app: &mut App<B, F>) {
         app.world.insert_resource(MonoClock::new(esp_clock_ns));
-        mirui::perf::set_clock(esp_clock_ns);
+        mirui::core::perf::set_clock(esp_clock_ns);
     }
 }
 
@@ -73,7 +73,7 @@ pub fn esp_perf_sink(report: FpsSummary<'_>) {
 
 /// `PerfReportPlugin` sink — per-span aggregates over `esp_println`.
 #[cfg(feature = "perf-fps")]
-pub fn esp_span_report_sink(report: &mirui::plugins::PerfReport) {
+pub fn esp_span_report_sink(report: &mirui::app::plugins::PerfReport) {
     for s in &report.stage_stats {
         if s.count == 0 {
             continue;
@@ -102,7 +102,7 @@ pub fn esp_span_report_sink(report: &mirui::plugins::PerfReport) {
 
 /// `[trace]` prefix is what `tools/esp-trace.py` greps for.
 #[cfg(feature = "perf-trace")]
-pub fn esp_perfetto_box() -> mirui::plugins::PerfettoLineSink {
+pub fn esp_perfetto_box() -> mirui::app::plugins::PerfettoLineSink {
     alloc::boxed::Box::new(|batch: &str| {
         // One esp_println per frame instead of per event — each call
         // walks a critical section + USB Serial-JTAG FIFO flush.
@@ -119,7 +119,7 @@ pub fn esp_perfetto_box() -> mirui::plugins::PerfettoLineSink {
 /// `BudgetReportPlugin` sink: prints over esp_println and bumps the
 /// LCD overlay counter (red `<n>!` line under the fps readout).
 #[cfg(feature = "perf-fps")]
-pub fn esp_budget_sink(v: mirui::plugins::BudgetViolation) {
+pub fn esp_budget_sink(v: mirui::app::plugins::BudgetViolation) {
     esp_println::println!(
         "[budget] avg {}us (budget {}us) p99 {}us (budget {}us) jitter {}us",
         v.avg_ns / 1000,

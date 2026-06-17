@@ -176,7 +176,7 @@ fn draw_overlay_line<S: SpiBus<u8>>(
         for col in 0..fw as usize {
             let ci = col / 8;
             let bit = col % 8;
-            let glyph = mirui::draw::font::glyph(num[ci]);
+            let glyph = mirui::render::font::glyph(num[ci]);
             let on = glyph[row] & (0x80 >> bit) != 0;
             row_buf[col * 2] = if on { px[0] } else { 0x00 };
             row_buf[col * 2 + 1] = if on { px[1] } else { 0x00 };

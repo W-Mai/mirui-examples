@@ -79,26 +79,33 @@ checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
 
 [[package]]
 name = "mirui"
-version = "0.28.2"
-source = "git+https://github.com/W-Mai/mirui.git#49de6dadb1e1d5db83aac1fda061062b2a87a330"
+version = "0.31.0"
+source = "git+https://github.com/W-Mai/mirui.git#281ce9dab8d7e45c7b04be71b3c044fa8cb2b57f"
 dependencies = [
  "critical-section",
  "hashbrown",
  "libc",
  "mirui-macros",
+ "mirx",
+ "rustc-hash",
  "web-time",
 ]
 
 [[package]]
 name = "mirui-macros"
-version = "0.28.2"
-source = "git+https://github.com/W-Mai/mirui.git#49de6dadb1e1d5db83aac1fda061062b2a87a330"
+version = "0.31.0"
+source = "git+https://github.com/W-Mai/mirui.git#281ce9dab8d7e45c7b04be71b3c044fa8cb2b57f"
 dependencies = [
  "proc-macro2",
  "quote",
  "syn",
  "xrune",
 ]
+
+[[package]]
+name = "mirx"
+version = "0.31.0"
+source = "git+https://github.com/W-Mai/mirui.git#281ce9dab8d7e45c7b04be71b3c044fa8cb2b57f"
 
 [[package]]
 name = "nuttx"
@@ -147,6 +154,12 @@ checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "rustc-hash"
+version = "2.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94300abf3f1ae2e2b8ffb7b58043de3d399c73fa6f4b73826402a5c457614dbe"
 
 [[package]]
 name = "rustversion"
@@ -234,9 +247,9 @@ dependencies = [
 
 [[package]]
 name = "xrune"
-version = "1.6.0"
+version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86300ce7e4b9aafd431f68bc59bf1397347b27ce7d477096692efb15851c44e2"
+checksum = "eea88ffefe64215a18cc8459e29bfa9bcbd7de80f5e95ce89ef63c8336a0e6cb"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -247,9 +260,9 @@ dependencies = [
 
 [[package]]
 name = "xrune-incant"
-version = "1.6.0"
+version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcda354af1ab28b4f6f83277fa3c3d1dde3c7a1496c5d45ec8c7d7da03b65b6b"
+checksum = "20b47eadee4806c5bf2d7e36529311d0d2e89d9a2bc27579d1fdd0d7d982c67d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -259,9 +272,9 @@ dependencies = [
 
 [[package]]
 name = "xrune-nexus"
-version = "1.6.0"
+version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3dac3f0c466ade5d5f03402972f18c7acd7781125695f65e76363f7a0c5e5b14"
+checksum = "a53b7aae344228279fcbdec42af1a6b6fe983e9055fa6bbd175c59cdbe001fe6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -271,9 +284,9 @@ dependencies = [
 
 [[package]]
 name = "xrune-sigil"
-version = "1.6.0"
+version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca2f3d8c411486bed82ab5a99291776e613cc93e5c27bcb9baa509093fddc10d"
+checksum = "d6b94b1cb4f804f80400c9987e8ba3202de2fc163bc2707ab32ad3d0a244101b"
 dependencies = [
  "proc-macro2",
  "quote",

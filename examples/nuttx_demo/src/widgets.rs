@@ -5,17 +5,17 @@
 
 use mirui::anim::ease;
 use mirui::app::{App, RendererFactory};
-use mirui::components::{Slider, Switch};
+use mirui::ui::widgets::{Slider, Switch};
 use mirui::ecs::Entity;
-use mirui::event::sim::{SimAction, SimTimeline, sim_timeline_system};
+use mirui::input::event::sim::{SimAction, SimTimeline, sim_timeline_system};
 use mirui::gallery::demos::widgets::{
     Cycle, ThemeCycleIndex, dark_with_accent, slider_to_progress_system,
 };
-use mirui::plugins::{FpsSummary, FpsSummaryPlugin, InputFeedbackPlugin, StdInstantClockPlugin};
+use mirui::app::plugins::{FpsSummary, FpsSummaryPlugin, InputFeedbackPlugin, StdInstantClockPlugin};
 use mirui::prelude::*;
 use mirui::surface::Surface;
 use mirui::types::DimPoint;
-use mirui::widget::Children;
+use mirui::ui::Children;
 
 const DEFAULT_SCALE: i32 = 4;
 
@@ -57,7 +57,7 @@ where
     }
 
     let tab_kids = {
-        let q: Vec<Entity> = app.world.query::<mirui::components::TabBar>().collect();
+        let q: Vec<Entity> = app.world.query::<mirui::ui::widgets::TabBar>().collect();
         let tab_bar_e = *q.first().expect("TabBar must be installed");
         app.world
             .get::<Children>(tab_bar_e)
@@ -79,7 +79,7 @@ where
         .expect("form Slider must be installed");
     let list_drag_anchor = app
         .world
-        .query::<mirui::components::LazyList>()
+        .query::<mirui::ui::widgets::LazyList>()
         .collect()
         .first()
         .copied()

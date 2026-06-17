@@ -18,16 +18,16 @@
 //!   timing, no double-buffer race, no dirty-region masking.
 
 use alloc::vec::Vec;
-use mirui::components::{ProgressBar, Slider, Switch, Text};
-use mirui::draw::sw::SwRenderer;
-use mirui::draw::texture::{ColorFormat, Texture};
+use mirui::ui::widgets::{ProgressBar, Slider, Switch, Text};
+use mirui::render::sw::SwRenderer;
+use mirui::render::texture::{ColorFormat, Texture};
 use mirui::ecs::{Entity, World};
-use mirui::layout::{AlignItems, FlexDirection, LayoutStyle, Padding};
+use mirui::ui::layout::{AlignItems, FlexDirection, LayoutStyle, Padding};
 use mirui::types::{Dimension, Fixed, Viewport};
-use mirui::widget::dirty::Dirty;
-use mirui::widget::theme::{ColorToken, ThemedColor};
-use mirui::widget::view::ViewRegistry;
-use mirui::widget::{
+use mirui::ui::dirty::Dirty;
+use mirui::ui::theme::{ColorToken, ThemedColor};
+use mirui::ui::view::ViewRegistry;
+use mirui::ui::{
     Children, OffscreenBufferPool, OffscreenRender, Parent, Style, Theme, Widget, render_system,
 };
 
