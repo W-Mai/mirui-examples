@@ -352,6 +352,14 @@ fn run_normal() -> ! {
             life::LifeTick::install(&mut app.world);
         }
 
+        #[cfg(feature = "demo-atlas-font")]
+        {
+            use mirui::gallery::demos::atlas_font;
+            atlas_font::register_font(&mut app.world);
+            let parent = app.spawn_root().id();
+            atlas_font::build_widgets(&mut app.world, parent);
+        }
+
         // demo-gesture: ESP's old hand-rolled Slider/Switch handler is
         // superseded by internal gesture in v0.27.2+. Routes to slider_switch.
         #[cfg(feature = "demo-gesture")]
