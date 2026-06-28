@@ -845,8 +845,8 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "mirui"
-version = "0.34.0"
-source = "git+https://github.com/W-Mai/mirui.git#7daa88ec85fa4f83af90d3d9bf641fdb13cbfde1"
+version = "0.35.0"
+source = "git+https://github.com/W-Mai/mirui.git#09819a28e5d17fb81cbe0cbce75b374a7f05a10c"
 dependencies = [
  "critical-section",
  "hashbrown 0.15.5",
@@ -871,8 +871,8 @@ dependencies = [
 
 [[package]]
 name = "mirui-macros"
-version = "0.34.0"
-source = "git+https://github.com/W-Mai/mirui.git#7daa88ec85fa4f83af90d3d9bf641fdb13cbfde1"
+version = "0.35.0"
+source = "git+https://github.com/W-Mai/mirui.git#09819a28e5d17fb81cbe0cbce75b374a7f05a10c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -882,8 +882,8 @@ dependencies = [
 
 [[package]]
 name = "mirx"
-version = "0.34.0"
-source = "git+https://github.com/W-Mai/mirui.git#7daa88ec85fa4f83af90d3d9bf641fdb13cbfde1"
+version = "0.35.0"
+source = "git+https://github.com/W-Mai/mirui.git#09819a28e5d17fb81cbe0cbce75b374a7f05a10c"
 
 [[package]]
 name = "nb"

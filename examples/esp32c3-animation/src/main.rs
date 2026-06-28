@@ -381,6 +381,9 @@ fn run_normal() -> ! {
             app.world.insert(cycle_e, widgets::ThemeCycleIndex(0));
             let parent = app.spawn_root().id();
             widgets::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            if let Some(timeline) = widgets::build_sim_timeline(&app.world) {
+                app.world.insert_resource(timeline);
+            }
         }
 
         #[cfg(feature = "demo-effects")]
