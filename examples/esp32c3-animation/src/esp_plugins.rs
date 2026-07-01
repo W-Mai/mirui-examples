@@ -1,8 +1,8 @@
-use mirui::app::{App, RendererFactory};
-use mirui::ecs::MonoClock;
 use mirui::app::plugin::Plugin;
+use mirui::app::{App, RendererFactory};
 #[cfg(feature = "perf-fps")]
 use mirui::app::plugins::FpsSummary;
+use mirui::ecs::MonoClock;
 use mirui::surface::Surface;
 
 // esp_hal Instant uses the full 52-bit systimer; csr 0x7E2 wraps
@@ -14,11 +14,13 @@ fn esp_clock_ns() -> u64 {
     micros.saturating_mul(1000)
 }
 
-/// Backs `MonoClock` and `crate::perf` with `esp_hal::time::Instant`.
+/// Backs mirui's process clock with `esp_hal::time::Instant`. Installs
+/// once at boot; every downstream reader (MonoClock, mirui::info!,
+/// trace_span!, App::clock_ns) shares the same nanoseconds afterwards.
 ///
 /// **Inserts**
-/// - resource: `MonoClock`
-/// - global: calls `mirui::core::perf::set_clock` so `trace_span!` records
+/// - global clock: `core::time::set_clock(esp_clock_ns)`
+/// - resource: `MonoClock` reading the global clock
 #[derive(Default)]
 pub struct SystimerClockPlugin;
 
@@ -28,8 +30,9 @@ where
     F: RendererFactory<B>,
 {
     fn build(&mut self, app: &mut App<B, F>) {
-        app.world.insert_resource(MonoClock::new(esp_clock_ns));
-        mirui::core::perf::set_clock(esp_clock_ns);
+        mirui::core::time::set_clock(esp_clock_ns);
+        app.world
+            .insert_resource(MonoClock::from_time_source());
     }
 }
 
