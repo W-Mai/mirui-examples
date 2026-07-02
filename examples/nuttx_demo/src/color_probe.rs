@@ -2,11 +2,7 @@
 //! Use to disambiguate panel byte order, BGR/RGB layout, and rotation:
 //! swap `widgets::build` for `color_probe::build` in `lib.rs::mirui_main`.
 
-use mirui::app::{App, RendererFactory};
-use mirui::ecs::Entity;
 use mirui::prelude::*;
-use mirui::surface::Surface;
-use mirui_macros::ui;
 
 pub fn build<S, F>(app: &mut App<S, F>) -> Entity
 where

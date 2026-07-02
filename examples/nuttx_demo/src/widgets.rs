@@ -2,10 +2,7 @@
 //! `mirui::gallery::demos::widgets::setup_app` after spawning a
 //! viewport-sized root against `/dev/fb0`.
 
-use mirui::app::{App, RendererFactory};
-use mirui::ecs::Entity;
 use mirui::prelude::*;
-use mirui::surface::Surface;
 
 pub fn build<S, F>(app: &mut App<S, F>) -> Entity
 where
