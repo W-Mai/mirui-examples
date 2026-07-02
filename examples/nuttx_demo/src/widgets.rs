@@ -1,21 +1,22 @@
 //! NuttX runner for gallery's widgets showcase. The widget tree, theme
 //! cycle, and slider→progress wiring come from `mirui::gallery::demos::widgets`;
-//! this file adds the NuttX-only driver — syslog FPS sink, offscreen budget,
-//! input feedback, and a scripted SimTimeline tour.
+//! this file adds the NuttX-only driver — offscreen budget, input
+//! feedback, and a scripted SimTimeline tour. FPS output rides on
+//! mirui's built-in dispatch through the platform default sink.
 
 use mirui::anim::ease;
+use mirui::app::plugins::{FpsSummaryPlugin, InputFeedbackPlugin, StdInstantClockPlugin};
 use mirui::app::{App, RendererFactory};
-use mirui::ui::widgets::{Slider, Switch};
 use mirui::ecs::Entity;
-use mirui::input::event::sim::{SimAction, SimTimeline, sim_timeline_system};
 use mirui::gallery::demos::widgets::{
     Cycle, ThemeCycleIndex, dark_with_accent, slider_to_progress_system,
 };
-use mirui::app::plugins::{FpsSummary, FpsSummaryPlugin, InputFeedbackPlugin, StdInstantClockPlugin};
+use mirui::input::event::sim::{SimAction, SimTimeline, sim_timeline_system};
 use mirui::prelude::*;
 use mirui::surface::Surface;
 use mirui::types::DimPoint;
 use mirui::ui::Children;
+use mirui::ui::widgets::{Slider, Switch};
 
 const DEFAULT_SCALE: i32 = 4;
 
@@ -31,7 +32,7 @@ where
 
     app.add_plugin(InputFeedbackPlugin::default());
     app.add_plugin(StdInstantClockPlugin);
-    app.add_plugin(FpsSummaryPlugin::default().with_sink(syslog_fps_sink));
+    app.add_plugin(FpsSummaryPlugin::default());
     app.with_offscreen_pool_budget(512 * 1024);
     app.add_system(sim_timeline_system::system());
     app.add_system(slider_to_progress_system::system());
@@ -127,41 +128,4 @@ where
     );
 
     root
-}
-
-fn syslog_fps_sink(r: FpsSummary<'_>) {
-    let work_fps = if r.avg_frame_ns == 0 {
-        0.0
-    } else {
-        1_000_000_000.0 / r.avg_frame_ns as f64
-    };
-    let wall_fps = match r.wall_ns {
-        Some(ns) if ns > 0 => f64::from(r.frames) * 1_000_000_000.0 / ns as f64,
-        _ => 0.0,
-    };
-    mirui::info!(
-        target: "mirui::fps",
-        "{} frames | wall {:.1} fps | work {}us ({:.1} fps) = input {} + systems {} + layout {} + render {} + flush {} + seed {}",
-        r.frames,
-        wall_fps,
-        r.avg_frame_ns / 1000,
-        work_fps,
-        r.avg_input_ns / 1000,
-        r.avg_systems_ns / 1000,
-        r.avg_layout_ns / 1000,
-        r.avg_render_ns / 1000,
-        r.avg_flush_ns / 1000,
-        r.avg_seed_prev_ns / 1000,
-    );
-    if let Some(s) = r.stats {
-        mirui::info!(
-            target: "mirui::fps",
-            "window={} min {}us max {}us p99 {}us jitter {}us",
-            s.len(),
-            s.min() / 1000,
-            s.max() / 1000,
-            s.p99() / 1000,
-            s.jitter() / 1000,
-        );
-    }
 }
