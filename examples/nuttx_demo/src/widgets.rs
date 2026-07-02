@@ -139,8 +139,9 @@ fn syslog_fps_sink(r: FpsSummary<'_>) {
         Some(ns) if ns > 0 => f64::from(r.frames) * 1_000_000_000.0 / ns as f64,
         _ => 0.0,
     };
-    mirui::__mirui_nuttx_info!(
-        "[fps] {} frames | wall {:.1} fps | work {}us ({:.1} fps) = input {} + systems {} + layout {} + render {} + flush {} + seed {}",
+    mirui::info!(
+        target: "mirui::fps",
+        "{} frames | wall {:.1} fps | work {}us ({:.1} fps) = input {} + systems {} + layout {} + render {} + flush {} + seed {}",
         r.frames,
         wall_fps,
         r.avg_frame_ns / 1000,
@@ -153,8 +154,9 @@ fn syslog_fps_sink(r: FpsSummary<'_>) {
         r.avg_seed_prev_ns / 1000,
     );
     if let Some(s) = r.stats {
-        mirui::__mirui_nuttx_info!(
-            "[fps] window={} min {}us max {}us p99 {}us jitter {}us",
+        mirui::info!(
+            target: "mirui::fps",
+            "window={} min {}us max {}us p99 {}us jitter {}us",
             s.len(),
             s.min() / 1000,
             s.max() / 1000,
