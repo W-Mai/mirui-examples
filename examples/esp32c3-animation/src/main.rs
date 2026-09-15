@@ -425,20 +425,22 @@ fn run_normal() -> ! {
 
         #[cfg(feature = "perf-fps")]
         {
-            let perf_report = mirui::app::plugins::PerfReportPlugin::new(100)
-                .with_sink(esp_plugins::esp_span_report_sink);
             #[cfg(feature = "perf-trace")]
-            let perf_report = perf_report.with_perfetto_line_sink(esp_plugins::esp_perfetto_box());
+            let perf_report = mirui::app::plugins::PerfReportPlugin::new(100)
+                .with_sink(esp_plugins::esp_span_report_sink)
+                .with_perfetto_line_sink(esp_plugins::esp_perfetto_box());
             // Budget +20% above measured baseline.
             let budget = mirui::app::plugins::BudgetReportPlugin::new(100)
                 .with_avg_budget(17_000_000)
                 .with_p99_budget(22_000_000)
                 .with_sink(esp_plugins::esp_budget_sink);
             app.add_plugin(
-                mirui::app::plugins::FpsSummaryPlugin::new(100).with_sink(esp_plugins::esp_perf_sink),
+                mirui::app::plugins::FpsSummaryPlugin::new(100)
+                    .with_sink(esp_plugins::esp_perf_sink),
             )
-            .add_plugin(perf_report)
             .add_plugin(budget);
+            #[cfg(feature = "perf-trace")]
+            app.add_plugin(perf_report);
         }
 
         app.run();

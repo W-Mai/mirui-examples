@@ -15,15 +15,13 @@ fps-overlay = []
 # through the quad path (SDF / supersample) and adds per-frame cost.
 spin = []
 
-# FPS / p99 / budget reports + per-window [perf] span totals.
-# Pulls in mirui's `perf` feature(perf event ring + trace_span
-# instrumentation)so it isn't paid for in default builds.
+# Low-overhead FPS / p99 / jitter / budget reports. The mirui `perf`
+# feature provides frame timing without enabling detailed span capture.
 perf-fps = ["mirui/perf"]
 
-# perf-fps + chrome-trace JSON streamed over UART for
-# tools/esp-trace.py. ESP32-C3's USB Serial-JTAG drains ~64
-# bytes / USB frame, so a busy frame's ~2.4 KB of trace events
-# blocks ~20 ms; perf-fps numbers will inflate by that much.
+# Adds per-span aggregates and chrome-trace JSON over UART.
+# ESP32-C3's USB Serial-JTAG drains ~64 bytes per USB frame, so
+# a busy frame's trace stream materially inflates timing results.
 #   cargo run ... --features demo-threebody,perf-trace
 perf-trace = ["perf-fps"]
 

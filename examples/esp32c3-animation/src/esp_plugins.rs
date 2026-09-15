@@ -75,7 +75,7 @@ pub fn esp_perf_sink(report: FpsSummary<'_>) {
 }
 
 /// `PerfReportPlugin` sink — per-span aggregates over `esp_println`.
-#[cfg(feature = "perf-fps")]
+#[cfg(feature = "perf-trace")]
 pub fn esp_span_report_sink(report: &mirui::app::plugins::PerfReport) {
     for s in &report.stage_stats {
         if s.count == 0 {
