@@ -28,7 +28,7 @@ use mirui::prelude::{App, World};
 ))]
 use mirui::surface::Surface;
 use mirui::surface::framebuf::FramebufSurface;
-use mirui::types::Rect;
+use mirui::types::PhysicalRect;
 
 mod board;
 #[cfg(feature = "app-demo")]
@@ -212,12 +212,11 @@ fn run_normal() -> ! {
     // Drop to 600 / 50 / 30 when capturing visual snapshots.
     const CAPTURE_EVERY: u32 = 1_000_000;
 
-    let flush_cb = move |buf: &[u8], area: &Rect| {
-        let (x0, y0, x1, y1) = area.pixel_bounds();
-        let x = x0.max(0) as u16;
-        let y = y0.max(0) as u16;
-        let w = ((x1.max(0) as u16).min(W)).saturating_sub(x);
-        let h = ((y1.max(0) as u16).min(H)).saturating_sub(y);
+    let flush_cb = move |buf: &[u8], area: PhysicalRect| {
+        let x = area.x();
+        let y = area.y();
+        let w = area.width();
+        let h = area.height();
         if w > 0 && h > 0 {
             lcd.push_region_raw(buf, W, x, y, w, h);
         }
@@ -408,6 +407,13 @@ fn run_normal() -> ! {
             use mirui::gallery::demos::kinetic_console;
             let parent = app.spawn_root().id();
             kinetic_console::install(&mut app, parent, true);
+        }
+
+        #[cfg(feature = "demo-curve-text")]
+        {
+            use mirui::gallery::demos::curve_text;
+            let parent = app.spawn_root().id();
+            curve_text::install_compact(&mut app, parent);
         }
 
         #[cfg(feature = "demo-effects")]
