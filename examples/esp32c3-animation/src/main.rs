@@ -20,9 +20,14 @@ use esp_hal::time::Rate;
 
 #[cfg(feature = "app-demo")]
 use mirui::prelude::{App, World};
-use mirui::surface::framebuf::FramebufSurface;
-#[cfg(feature = "app-demo")]
+#[cfg(any(
+    feature = "demo-threebody",
+    feature = "demo-coverflow",
+    feature = "demo-life",
+    feature = "demo-widgets"
+))]
 use mirui::surface::Surface;
+use mirui::surface::framebuf::FramebufSurface;
 use mirui::types::Rect;
 
 mod board;
@@ -218,7 +223,7 @@ fn run_normal() -> ! {
         }
 
         capture_counter = capture_counter.wrapping_add(1);
-        if capture_counter % CAPTURE_EVERY == 0 {
+        if capture_counter.is_multiple_of(CAPTURE_EVERY) {
             esp_println::println!(
                 "[CAP_BEGIN] w={} h={} fmt=RGB565Swapped len={}",
                 W,
@@ -246,8 +251,6 @@ fn run_normal() -> ! {
             board::draw_perf_overlay(&mut lcd, fps, violations);
         }
     };
-
-
 
     // -----------------------------------------------------------------
     // mirui::App-based demos: build the backend with HiDPI options if
@@ -290,7 +293,19 @@ fn run_normal() -> ! {
         app.add_system(frame_counter_system::system());
         app.world.insert_resource(FrameCounter(0));
 
+        #[cfg(any(
+            feature = "demo-threebody",
+            feature = "demo-coverflow",
+            feature = "demo-life",
+            feature = "demo-widgets"
+        ))]
         let logical_w = app.backend.display_info().width;
+        #[cfg(any(
+            feature = "demo-threebody",
+            feature = "demo-coverflow",
+            feature = "demo-life",
+            feature = "demo-widgets"
+        ))]
         let logical_h = app.backend.display_info().height;
 
         #[cfg(feature = "demo-threebody")]
@@ -386,6 +401,13 @@ fn run_normal() -> ! {
             if let Some(timeline) = widgets::build_sim_timeline(&app.world) {
                 app.world.insert_resource(timeline);
             }
+        }
+
+        #[cfg(feature = "demo-kinetic")]
+        {
+            use mirui::gallery::demos::kinetic_console;
+            let parent = app.spawn_root().id();
+            kinetic_console::install(&mut app, parent, true);
         }
 
         #[cfg(feature = "demo-effects")]

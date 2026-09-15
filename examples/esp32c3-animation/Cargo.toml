@@ -52,6 +52,7 @@ demo-coverflow = ["app-demo"]
 demo-gesture = ["app-demo"]
 demo-widgets = ["app-demo"]
 demo-effects = ["app-demo"]     # Mirror + BackgroundBlur over a tile grid.
+demo-kinetic = ["app-demo"]
 
 # shapes and butterfly used to drive FramebufSurface directly; from
 # v0.28 they sit inside mirui::gallery::demos as Canvas-style custom

@@ -1,7 +1,7 @@
 use mirui::app::plugin::Plugin;
-use mirui::app::{App, RendererFactory};
 #[cfg(feature = "perf-fps")]
 use mirui::app::plugins::FpsSummary;
+use mirui::app::{App, RendererFactory};
 use mirui::ecs::MonoClock;
 use mirui::surface::Surface;
 
@@ -31,8 +31,7 @@ where
 {
     fn build(&mut self, app: &mut App<B, F>) {
         mirui::core::time::set_clock(esp_clock_ns);
-        app.world
-            .insert_resource(MonoClock::from_time_source());
+        app.world.insert_resource(MonoClock::from_time_source());
     }
 }
 
@@ -41,11 +40,9 @@ where
 /// from `PerfReportPlugin` instead of being re-implemented here.
 #[cfg(feature = "perf-fps")]
 pub fn esp_perf_sink(report: FpsSummary<'_>) {
-    let fps = if report.avg_frame_ns == 0 {
-        0
-    } else {
-        1_000_000_000 / report.avg_frame_ns
-    };
+    let fps = 1_000_000_000u64
+        .checked_div(report.avg_frame_ns)
+        .unwrap_or(0);
     #[cfg(feature = "fps-overlay")]
     unsafe {
         crate::FPS_DISPLAY = fps as u32;

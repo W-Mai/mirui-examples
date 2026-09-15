@@ -81,7 +81,7 @@ repo's tree.
 
 | Directory | Description |
 |-----------|-------------|
-| `esp32c3-animation` | Three-body simulation with ECS absolute positioning, dirty-rect partial refresh (160fps), mirui DSL UI background |
+| `esp32c3-animation` | Gallery demos for a 128 × 128 display, including the autonomous Kinetic Console and three-body simulation |
 
 ## Performance
 
