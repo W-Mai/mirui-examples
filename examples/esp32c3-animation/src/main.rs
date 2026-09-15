@@ -306,7 +306,9 @@ fn run_normal() -> ! {
             app.add_system(three_body::kick_system::system());
             app.add_system(three_body::sync_layout_system::system());
             let parent = app.spawn_root().id();
-            three_body::build_widgets(&mut app.world, parent, logical_w, logical_h, n_bodies, eq);
+            app.compose(parent, |cx| {
+                three_body::build_widgets(cx, logical_w as u16, logical_h as u16, n_bodies, eq);
+            });
         }
 
         #[cfg(feature = "demo-subpixel")]
