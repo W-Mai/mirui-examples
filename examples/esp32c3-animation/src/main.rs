@@ -412,9 +412,9 @@ fn run_normal() -> ! {
 
         #[cfg(feature = "demo-curve-text")]
         {
-            use mirui::gallery::demos::curve_text;
+            use mirui::gallery::demos::curve_text_compact;
             let parent = app.spawn_root().id();
-            curve_text::install_compact(&mut app, parent);
+            curve_text_compact::install(&mut app, parent);
         }
 
         #[cfg(feature = "demo-effects")]
