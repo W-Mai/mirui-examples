@@ -89,6 +89,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b396d1f76d455557e1218ec8066ae14bba60b4b36ecd55577ba979f5db7ecaa"
 
 [[package]]
+name = "core_maths"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77745e017f5edba1a9c1d854f6f3a52dac8a12dd5af5d2f54aecf61e43d80d30"
+dependencies = [
+ "libm",
+]
+
+[[package]]
 name = "critical-section"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -826,6 +835,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
 
 [[package]]
+name = "libm"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
+
+[[package]]
 name = "litrs"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -845,14 +860,15 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "mirui"
-version = "0.43.0"
-source = "git+https://github.com/W-Mai/mirui.git#7515d2463e54ee15c43004a2c5f64988afccca72"
+version = "0.44.0"
+source = "git+https://github.com/W-Mai/mirui.git#51e9cb92cba33357e1e4acaf4efd425589177dd5"
 dependencies = [
  "critical-section",
  "hashbrown 0.15.5",
  "mirui-macros",
  "mirx",
  "rustc-hash",
+ "textflow-rs",
 ]
 
 [[package]]
@@ -871,8 +887,8 @@ dependencies = [
 
 [[package]]
 name = "mirui-macros"
-version = "0.43.0"
-source = "git+https://github.com/W-Mai/mirui.git#7515d2463e54ee15c43004a2c5f64988afccca72"
+version = "0.44.0"
+source = "git+https://github.com/W-Mai/mirui.git#51e9cb92cba33357e1e4acaf4efd425589177dd5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -882,9 +898,10 @@ dependencies = [
 
 [[package]]
 name = "mirx"
-version = "0.43.0"
-source = "git+https://github.com/W-Mai/mirui.git#7515d2463e54ee15c43004a2c5f64988afccca72"
+version = "0.44.0"
+source = "git+https://github.com/W-Mai/mirui.git#51e9cb92cba33357e1e4acaf4efd425589177dd5"
 dependencies = [
+ "ttf-parser",
  "wide",
 ]
 
@@ -1219,6 +1236,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "textflow-rs"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fd82dfeedb026c87d37c4e9f2391449044e7940ac8227b4a7c591403df94b74"
+
+[[package]]
 name = "toml_datetime"
 version = "1.1.1+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1246,6 +1269,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2abe9b86193656635d2411dc43050282ca48aa31c2451210f4202550afb7526"
 dependencies = [
  "winnow",
+]
+
+[[package]]
+name = "ttf-parser"
+version = "0.25.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31"
+dependencies = [
+ "core_maths",
 ]
 
 [[package]]
