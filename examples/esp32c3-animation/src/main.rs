@@ -19,7 +19,9 @@ use esp_hal::time::Rate;
 // App, FPS resources, perf plugin) are cfg-gated on "not shapes/butterfly".
 
 #[cfg(feature = "app-demo")]
-use mirui::prelude::{App, World};
+use mirui::prelude::App;
+#[cfg(all(feature = "app-demo", feature = "perf-plan-probe"))]
+use mirui::prelude::World;
 #[cfg(any(
     feature = "demo-threebody",
     feature = "demo-coverflow",
@@ -102,25 +104,24 @@ pub fn budget_violations_inc() {
     });
 }
 
-#[cfg(feature = "app-demo")]
+#[cfg(all(feature = "app-demo", feature = "perf-plan-probe"))]
 pub struct FrameCounter(pub u32);
 
-#[cfg(feature = "app-demo")]
+#[cfg(all(feature = "app-demo", feature = "perf-plan-probe"))]
 #[mirui::system]
 fn frame_counter_system(world: &mut World) {
-    let _n = if let Some(fc) = world.resource_mut::<FrameCounter>() {
+    let n = if let Some(fc) = world.resource_mut::<FrameCounter>() {
         fc.0 = fc.0.wrapping_add(1);
         fc.0
     } else {
         0
     };
-    #[cfg(feature = "perf-plan-probe")]
-    if _n.is_multiple_of(30) {
+    if n.is_multiple_of(30) {
         if let Some(p) = world.resource::<mirui::ui::render_system::LastDirtyRegions>() {
             for (i, r) in p.0.rects.iter().enumerate() {
                 esp_println::println!(
                     "[plan] f={} rect[{}] {}x{}@({},{})",
-                    _n,
+                    n,
                     i,
                     r.w.to_int(),
                     r.h.to_int(),
@@ -131,7 +132,7 @@ fn frame_counter_system(world: &mut World) {
             for (i, s) in p.0.shifts.iter().enumerate() {
                 esp_println::println!(
                     "[plan] f={} scr[{}] {}x{}@({},{}) dy={}",
-                    _n,
+                    n,
                     i,
                     s.area.w.to_int(),
                     s.area.h.to_int(),
@@ -286,8 +287,11 @@ fn run_normal() -> ! {
         // during build_widgets to seed time-driven animations.
         app.add_plugin(esp_plugins::SystimerClockPlugin);
         app.add_plugin(mirui::app::plugins::ImageResourcesPlugin::default());
-        app.add_system(frame_counter_system::system());
-        app.world.insert_resource(FrameCounter(0));
+        #[cfg(feature = "perf-plan-probe")]
+        {
+            app.add_system(frame_counter_system::system());
+            app.world.insert_resource(FrameCounter(0));
+        }
 
         #[cfg(any(
             feature = "demo-threebody",
