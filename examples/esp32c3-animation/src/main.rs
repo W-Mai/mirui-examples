@@ -40,8 +40,10 @@ use board::{H, St7735, W};
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
+#[cfg(feature = "frame-capture")]
 const B64_ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+#[cfg(feature = "frame-capture")]
 fn b64_encode(input: &[u8], out: &mut [u8]) -> usize {
     let mut o = 0;
     let mut i = 0;
@@ -203,14 +205,8 @@ fn run_normal() -> ! {
     lcd.init(&mut rst);
     bl.set_high();
 
-    // Capture: every N flushes, emit the entire framebuffer as
-    // base64-encoded raw pixel bytes between [CAP_BEGIN]/[CAP_END]
-    // markers so a host script can dump it as a PNG. 32 KB at 115200
-    // baud takes ~4 s to drain; renderer stalls for that window. Set
-    // wide enough so most of the frame budget is still rendering.
+    #[cfg(feature = "frame-capture")]
     let mut capture_counter: u32 = 0;
-    // Drop to 600 / 50 / 30 when capturing visual snapshots.
-    const CAPTURE_EVERY: u32 = 1_000_000;
 
     let flush_cb = move |buf: &[u8], area: PhysicalRect| {
         let x = area.x();
@@ -221,27 +217,28 @@ fn run_normal() -> ! {
             lcd.push_region_raw(buf, W, x, y, w, h);
         }
 
-        capture_counter = capture_counter.wrapping_add(1);
-        if capture_counter.is_multiple_of(CAPTURE_EVERY) {
-            esp_println::println!(
-                "[CAP_BEGIN] w={} h={} fmt=RGB565Swapped len={}",
-                W,
-                H,
-                buf.len()
-            );
-            // Chunked base64 to keep individual lines under typical UART
-            // ring buffer sizes; emit ~64 raw bytes per line.
-            const CHUNK: usize = 48;
-            let mut idx = 0;
-            while idx < buf.len() {
-                let end = (idx + CHUNK).min(buf.len());
-                let mut out = [0u8; 64 + 4];
-                let n = b64_encode(&buf[idx..end], &mut out);
-                let s = core::str::from_utf8(&out[..n]).unwrap_or("");
-                esp_println::println!("[CAP] {}", s);
-                idx = end;
+        #[cfg(feature = "frame-capture")]
+        {
+            capture_counter = capture_counter.wrapping_add(1);
+            if capture_counter.is_multiple_of(1_000_000) {
+                esp_println::println!(
+                    "[CAP_BEGIN] w={} h={} fmt=RGB565Swapped len={}",
+                    W,
+                    H,
+                    buf.len()
+                );
+                const CHUNK: usize = 48;
+                let mut idx = 0;
+                while idx < buf.len() {
+                    let end = (idx + CHUNK).min(buf.len());
+                    let mut out = [0u8; 64 + 4];
+                    let n = b64_encode(&buf[idx..end], &mut out);
+                    let s = core::str::from_utf8(&out[..n]).unwrap_or("");
+                    esp_println::println!("[CAP] {}", s);
+                    idx = end;
+                }
+                esp_println::println!("[CAP_END]");
             }
-            esp_println::println!("[CAP_END]");
         }
         #[cfg(feature = "fps-overlay")]
         {

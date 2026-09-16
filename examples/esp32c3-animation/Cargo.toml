@@ -29,6 +29,7 @@ perf-trace = ["perf-fps"]
 # only — every dump is several extra println calls and pollutes
 # perf-fps' UART budget.
 perf-plan-probe = ["mirui/perf"]
+frame-capture = []
 
 # Internal marker: this demo runs on top of `mirui::App` (ECS world,
 # systems, plugins). Consumers never set this directly — each App-family
