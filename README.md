@@ -79,9 +79,39 @@ repo's tree.
 
 ## Examples
 
-| Directory | Description |
-|-----------|-------------|
-| `esp32c3-animation` | Gallery demos for a 128 × 128 display, including the autonomous Kinetic Console and three-body simulation |
+| Directory | Verified target | Display | Description |
+|-----------|-----------------|---------|-------------|
+| `esp32c3-animation` | ESP32-C3 Super Mini | ST7735S 128 × 128 SPI | Autonomous gallery demos, dirty-region rendering, input timelines, curve text, effects, and performance probes |
+| `nuttx_demo` | NuttX `rv-virt:fb` | `/dev/fb0` through QEMU virtio-gpu | Framebuffer, touch, keyboard, partial refresh, and RGB565/RGBA8888 integration |
+
+## ESP32-C3 demo features
+
+Select one `demo-*` feature with `--no-default-features`; `demo-threebody` is the default.
+
+| Feature | Content |
+|---------|---------|
+| `demo-threebody` | Animated N-body scene |
+| `demo-subpixel` | Fixed-point subpixel motion |
+| `demo-particles` | Particle, pulse, and bar animation |
+| `demo-flipcard` | Projective 2.5D card flip |
+| `demo-coverflow` | Projective cover flow |
+| `demo-life` | Compact Conway's Game of Life |
+| `demo-widgets` | Automated compact widget showcase |
+| `demo-effects` | Mirror and background blur |
+| `demo-kinetic` | Automated Kinetic Console |
+| `demo-curve-text-compact` | Bitmap text moving along a retained curve |
+| `demo-shapes` / `demo-butterfly` | Vector custom-view studies |
+| `demo-atlas-font` | Bundled MIRX atlas font |
+
+`perf-fps`, `perf-trace`, `perf-plan-probe`, `frame-capture`, `fps-overlay`, and `spin` add diagnostics or optional animation behavior. `demo-hidpi-downscale` and `demo-hidpi-upscale` change the logical viewport used by the three-body demo.
+
+## Target status
+
+| Target | Status | Notes |
+|--------|--------|-------|
+| ESP32-C3 Super Mini + ST7735S | Hardware verified | Complete board wiring and flash flow live in `esp32c3-animation` |
+| NuttX `rv-virt:fb` | QEMU verified | Functional validation target; cross-architecture QEMU timing is not a performance baseline |
+| ESP32-S3, RP2040, STM32 | Portable architecture, unverified here | Requires a board-specific allocator, clock, input, framebuffer flush, and panel driver |
 
 ## Performance
 

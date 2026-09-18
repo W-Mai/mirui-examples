@@ -410,7 +410,7 @@ fn run_normal() -> ! {
             kinetic_console::install(&mut app, parent, true);
         }
 
-        #[cfg(feature = "demo-curve-text")]
+        #[cfg(feature = "demo-curve-text-compact")]
         {
             use mirui::gallery::demos::curve_text_compact;
             let parent = app.spawn_root().id();
