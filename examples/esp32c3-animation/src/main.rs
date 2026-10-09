@@ -25,8 +25,7 @@ use mirui::prelude::World;
 #[cfg(any(
     feature = "demo-threebody",
     feature = "demo-coverflow",
-    feature = "demo-life",
-    feature = "demo-widgets"
+    feature = "demo-life"
 ))]
 use mirui::surface::Surface;
 use mirui::surface::framebuf::FramebufSurface;
@@ -296,15 +295,13 @@ fn run_normal() -> ! {
         #[cfg(any(
             feature = "demo-threebody",
             feature = "demo-coverflow",
-            feature = "demo-life",
-            feature = "demo-widgets"
+            feature = "demo-life"
         ))]
         let logical_w = app.backend.display_info().width;
         #[cfg(any(
             feature = "demo-threebody",
             feature = "demo-coverflow",
-            feature = "demo-life",
-            feature = "demo-widgets"
+            feature = "demo-life"
         ))]
         let logical_h = app.backend.display_info().height;
 
@@ -391,16 +388,8 @@ fn run_normal() -> ! {
             use mirui::gallery::demos::widgets;
             app.add_plugin(mirui::app::plugins::InputFeedbackPlugin::default());
             app.with_offscreen_pool_budget(32 * 1024);
-            app.add_system(mirui::input::event::sim::sim_timeline_system::system());
-            app.add_system(widgets::slider_to_progress_system::system());
-            app.world.insert_resource(widgets::dark_with_accent());
-            let cycle_e = widgets::Cycle::install(&mut app.world);
-            app.world.insert(cycle_e, widgets::ThemeCycleIndex(0));
             let parent = app.spawn_root().id();
-            widgets::build_widgets(&mut app.world, parent, logical_w, logical_h);
-            if let Some(timeline) = widgets::build_sim_timeline(&app.world) {
-                app.world.insert_resource(timeline);
-            }
+            widgets::install(&mut app, parent, true);
         }
 
         #[cfg(feature = "demo-kinetic")]
