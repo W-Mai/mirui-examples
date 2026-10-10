@@ -20,8 +20,6 @@ use esp_hal::time::Rate;
 
 #[cfg(feature = "app-demo")]
 use mirui::prelude::App;
-#[cfg(all(feature = "app-demo", feature = "perf-plan-probe"))]
-use mirui::prelude::World;
 #[cfg(any(
     feature = "demo-threebody",
     feature = "demo-coverflow",
@@ -108,38 +106,37 @@ pub struct FrameCounter(pub u32);
 
 #[cfg(all(feature = "app-demo", feature = "perf-plan-probe"))]
 #[mirui::system]
-fn frame_counter_system(world: &mut World) {
-    let n = if let Some(fc) = world.resource_mut::<FrameCounter>() {
-        fc.0 = fc.0.wrapping_add(1);
-        fc.0
-    } else {
-        0
-    };
-    if n.is_multiple_of(30) {
-        if let Some(p) = world.resource::<mirui::ui::render_system::LastDirtyRegions>() {
-            for (i, r) in p.0.rects.iter().enumerate() {
-                esp_println::println!(
-                    "[plan] f={} rect[{}] {}x{}@({},{})",
-                    n,
-                    i,
-                    r.w.to_int(),
-                    r.h.to_int(),
-                    r.x.to_int(),
-                    r.y.to_int(),
-                );
-            }
-            for (i, s) in p.0.shifts.iter().enumerate() {
-                esp_println::println!(
-                    "[plan] f={} scr[{}] {}x{}@({},{}) dy={}",
-                    n,
-                    i,
-                    s.area.w.to_int(),
-                    s.area.h.to_int(),
-                    s.area.x.to_int(),
-                    s.area.y.to_int(),
-                    s.dy.to_int(),
-                );
-            }
+fn frame_counter_system(
+    counter: res!(mut FrameCounter),
+    plan: res!(optional mirui::ui::render_system::LastDirtyRegions),
+) {
+    counter.0 = counter.0.wrapping_add(1);
+    let n = counter.0;
+    if n.is_multiple_of(30)
+        && let Some(p) = plan
+    {
+        for (i, r) in p.0.rects.iter().enumerate() {
+            esp_println::println!(
+                "[plan] f={} rect[{}] {}x{}@({},{})",
+                n,
+                i,
+                r.w.to_int(),
+                r.h.to_int(),
+                r.x.to_int(),
+                r.y.to_int(),
+            );
+        }
+        for (i, s) in p.0.shifts.iter().enumerate() {
+            esp_println::println!(
+                "[plan] f={} scr[{}] {}x{}@({},{}) dy={}",
+                n,
+                i,
+                s.area.w.to_int(),
+                s.area.h.to_int(),
+                s.area.x.to_int(),
+                s.area.y.to_int(),
+                s.dy.to_int(),
+            );
         }
     }
 }
@@ -289,7 +286,7 @@ fn run_normal() -> ! {
         #[cfg(feature = "perf-plan-probe")]
         {
             app.add_system(frame_counter_system::system());
-            app.world.insert_resource(FrameCounter(0));
+            app.add_resource(FrameCounter(0));
         }
 
         #[cfg(any(
@@ -318,9 +315,10 @@ fn run_normal() -> ! {
             app.add_system(three_body::kick_system::system());
             app.add_system(three_body::sync_layout_system::system());
             let parent = app.spawn_root().id();
-            app.compose(parent, |cx| {
-                three_body::build_widgets(cx, logical_w as u16, logical_h as u16, n_bodies, eq);
-            });
+            app.compose(
+                parent,
+                three_body::build_widgets(logical_w, logical_h, n_bodies, eq),
+            );
         }
 
         #[cfg(feature = "demo-subpixel")]
@@ -328,17 +326,18 @@ fn run_normal() -> ! {
             use mirui::gallery::demos::subpixel;
             app.add_system(subpixel::bar_move_system::system());
             let parent = app.spawn_root().id();
-            subpixel::build_widgets(&mut app.world, parent);
+            app.compose(parent, subpixel::build_widgets());
         }
 
         #[cfg(feature = "demo-particles")]
         {
             use mirui::gallery::demos::particles;
+            app.add_system(particles::particle_bounds_system::system());
             app.add_system(particles::particle_system::system());
             app.add_system(particles::pulse_ring_system::system());
             app.add_system(particles::bar_system::system());
             let parent = app.spawn_root().id();
-            particles::build_widgets(&mut app.world, parent);
+            app.compose(parent, particles::build_widgets());
         }
 
         #[cfg(feature = "demo-flipcard")]
@@ -346,7 +345,7 @@ fn run_normal() -> ! {
             use mirui::gallery::demos::flip_card;
             app.add_system(flip_card::flip_system::system());
             let parent = app.spawn_root().id();
-            flip_card::build_widgets(&mut app.world, parent);
+            app.compose(parent, flip_card::build_widgets());
         }
 
         #[cfg(feature = "demo-coverflow")]
@@ -354,7 +353,7 @@ fn run_normal() -> ! {
             use mirui::gallery::demos::cover_flow;
             app.add_system(cover_flow::layout_system::system());
             let parent = app.spawn_root().id();
-            cover_flow::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            app.compose(parent, cover_flow::build_widgets(logical_w, logical_h));
         }
 
         #[cfg(feature = "demo-life")]
@@ -362,7 +361,7 @@ fn run_normal() -> ! {
             use mirui::gallery::demos::life;
             app.with_widget(life::life_view());
             let parent = app.spawn_root().id();
-            life::build_widgets(&mut app.world, parent, logical_w, logical_h);
+            app.compose(parent, life::build_widgets(logical_w, logical_h));
             life::LifeTick::install(&mut app.world);
         }
 
@@ -408,21 +407,12 @@ fn run_normal() -> ! {
 
         #[cfg(feature = "demo-effects")]
         {
-            use mirui::ecs;
             use mirui::gallery::demos::effect_glass;
-            app.add_system(mirui::ecs::System::new(
-                "glass_x",
-                ecs::run_order::ANIMATION,
-                effect_glass::GlassX::system(),
-            ));
-            app.add_system(ecs::System::new(
-                "gauss_radius",
-                ecs::run_order::ANIMATION,
-                effect_glass::GaussRadius::system(),
-            ));
+            app.add_system(effect_glass::GlassX::system());
+            app.add_system(effect_glass::GaussRadius::system());
             app.with_offscreen_pool_budget(8 * 1024);
             let parent = app.spawn_root().id();
-            effect_glass::build_widgets(&mut app.world, parent);
+            app.compose(parent, effect_glass::build_widgets());
         }
 
         #[cfg(feature = "demo-shapes")]
@@ -431,7 +421,7 @@ fn run_normal() -> ! {
             app.with_widget(shapes::shapes_view());
             app.add_system(shapes::shapes_anim_system::system());
             let parent = app.spawn_root().id();
-            shapes::build_widgets(&mut app.world, parent);
+            app.compose(parent, shapes::build_widgets());
         }
 
         #[cfg(feature = "demo-butterfly")]
@@ -440,7 +430,7 @@ fn run_normal() -> ! {
             app.with_widget(butterfly::butterfly_view());
             app.add_system(butterfly::butterfly_anim_system::system());
             let parent = app.spawn_root().id();
-            butterfly::build_widgets(&mut app.world, parent);
+            app.compose(parent, butterfly::build_widgets());
         }
 
         #[cfg(feature = "perf-fps")]
