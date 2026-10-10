@@ -10,8 +10,8 @@ where
     F: RendererFactory<S>,
 {
     let info = app.backend.display_info();
-    let root = WidgetBuilder::new(&mut app.world)
-        .bg_color(ColorToken::Surface)
+    let root = app
+        .spawn_root()
         .layout(LayoutStyle {
             direction: FlexDirection::Column,
             width: Dimension::px(info.width as i32),

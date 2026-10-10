@@ -9,19 +9,19 @@ where
     S: Surface,
     F: RendererFactory<S>,
 {
-    let world = &mut app.world;
-    let root = WidgetBuilder::new(world).id();
+    let root = app.spawn_root().id();
+    app.compose(root, color_bands());
+    root
+}
+
+#[compose]
+fn color_bands() {
     ui! {
-        :(
-            parent: root
-            world: world
-        :)
-        column (direction: FlexDirection::Column, grow: 1.0) {
-            red    (bg_color: Color::rgb(255, 0,   0),   grow: 1.0) {}
-            green  (bg_color: Color::rgb(0,   255, 0),   grow: 1.0) {}
-            blue   (bg_color: Color::rgb(0,   0,   255), grow: 1.0) {}
-            white  (bg_color: Color::rgb(255, 255, 255), grow: 1.0) {}
+        Column (grow: 1.0) {
+            View (bg_color: Color::rgb(255, 0, 0), grow: 1.0)
+            View (bg_color: Color::rgb(0, 255, 0), grow: 1.0)
+            View (bg_color: Color::rgb(0, 0, 255), grow: 1.0)
+            View (bg_color: Color::rgb(255, 255, 255), grow: 1.0)
         }
     };
-    root
 }

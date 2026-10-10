@@ -22,8 +22,7 @@ pub extern "C" fn mirui_main(_argc: i32, _argv: *const *const u8) -> i32 {
     };
     let mut app = App::new(backend);
     app.with_default_widgets().with_default_systems();
-    let root = widgets::build(&mut app);
-    app.set_root(root);
+    widgets::build(&mut app);
     app.run();
     0
 }
