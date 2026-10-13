@@ -358,13 +358,11 @@ fn run_normal() -> ! {
             typography_lab::setup_app(&mut app, parent);
         }
 
-        // demo-gesture: ESP's old hand-rolled Slider/Switch handler is
-        // superseded by internal gesture in v0.27.2+. Routes to slider_switch.
-        #[cfg(feature = "demo-gesture")]
+        #[cfg(feature = "demo-interaction")]
         {
-            use mirui::gallery::demos::slider_switch;
+            use mirui::gallery::demos::interaction_lab;
             let parent = app.spawn_root().id();
-            slider_switch::build_widgets(&mut app.world, parent);
+            interaction_lab::setup_app(&mut app, parent);
         }
 
         #[cfg(feature = "demo-widgets")]

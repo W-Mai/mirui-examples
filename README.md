@@ -102,6 +102,7 @@ Select one `demo-*` feature with `--no-default-features`; `demo-threebody` is th
 | `demo-curve-text-compact` | Bitmap text moving along a retained curve |
 | `demo-shapes` / `demo-butterfly` | Vector custom-view studies |
 | `demo-typography` | Gallery Typography Lab with bundled MIRX fonts |
+| `demo-interaction` | Gallery Interaction Lab with typed input handlers |
 
 `perf-fps`, `perf-trace`, `perf-plan-probe`, `frame-capture`, `fps-overlay`, and `spin` add diagnostics or optional animation behavior. `demo-hidpi-downscale` and `demo-hidpi-upscale` change the logical viewport used by the three-body demo.
 
