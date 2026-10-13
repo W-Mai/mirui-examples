@@ -351,12 +351,11 @@ fn run_normal() -> ! {
             life::setup_app(&mut app, parent);
         }
 
-        #[cfg(feature = "demo-atlas-font")]
+        #[cfg(feature = "demo-typography")]
         {
-            use mirui::gallery::demos::atlas_font;
-            atlas_font::register_font(&mut app.world);
+            use mirui::gallery::demos::typography_lab;
             let parent = app.spawn_root().id();
-            atlas_font::build_widgets(&mut app.world, parent);
+            typography_lab::setup_app(&mut app, parent);
         }
 
         // demo-gesture: ESP's old hand-rolled Slider/Switch handler is
