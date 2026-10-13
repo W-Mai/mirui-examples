@@ -95,7 +95,7 @@ Select one `demo-*` feature with `--no-default-features`; `demo-threebody` is th
 | `demo-particles` | Particle, pulse, and bar animation |
 | `demo-flipcard` | Projective 2.5D card flip |
 | `demo-coverflow` | Projective cover flow |
-| `demo-life` | Compact Conway's Game of Life |
+| `demo-life` | Gallery Life with its shared view, timer, and update system |
 | `demo-widgets` | Automated compact widget showcase |
 | `demo-effects` | Mirror and background blur |
 | `demo-kinetic` | Automated Kinetic Console |

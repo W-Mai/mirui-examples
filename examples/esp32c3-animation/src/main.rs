@@ -20,11 +20,7 @@ use esp_hal::time::Rate;
 
 #[cfg(feature = "app-demo")]
 use mirui::prelude::App;
-#[cfg(any(
-    feature = "demo-threebody",
-    feature = "demo-coverflow",
-    feature = "demo-life"
-))]
+#[cfg(any(feature = "demo-threebody", feature = "demo-coverflow"))]
 use mirui::surface::Surface;
 use mirui::surface::framebuf::FramebufSurface;
 use mirui::types::PhysicalRect;
@@ -289,17 +285,9 @@ fn run_normal() -> ! {
             app.add_resource(FrameCounter(0));
         }
 
-        #[cfg(any(
-            feature = "demo-threebody",
-            feature = "demo-coverflow",
-            feature = "demo-life"
-        ))]
+        #[cfg(any(feature = "demo-threebody", feature = "demo-coverflow"))]
         let logical_w = app.backend.display_info().width;
-        #[cfg(any(
-            feature = "demo-threebody",
-            feature = "demo-coverflow",
-            feature = "demo-life"
-        ))]
+        #[cfg(any(feature = "demo-threebody", feature = "demo-coverflow"))]
         let logical_h = app.backend.display_info().height;
 
         #[cfg(feature = "demo-threebody")]
@@ -359,10 +347,8 @@ fn run_normal() -> ! {
         #[cfg(feature = "demo-life")]
         {
             use mirui::gallery::demos::life;
-            app.with_widget(life::life_view());
             let parent = app.spawn_root().id();
-            app.compose(parent, life::build_widgets(logical_w, logical_h));
-            life::LifeTick::install(&mut app.world);
+            life::setup_app(&mut app, parent);
         }
 
         #[cfg(feature = "demo-atlas-font")]
