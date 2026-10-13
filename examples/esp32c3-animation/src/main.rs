@@ -6,31 +6,38 @@ extern crate alloc;
 use core::mem::MaybeUninit;
 use core::ptr::addr_of_mut;
 use embedded_alloc::TlsfHeap;
-use esp_hal::dma::{DmaRxBuf, DmaTxBuf};
-use esp_hal::dma_buffers;
-use esp_hal::gpio::{Level, Output, OutputConfig};
-use esp_hal::spi::Mode as SpiMode;
-use esp_hal::spi::master::{Config as SpiConfig, Spi};
-use esp_hal::time::Rate;
+#[cfg(not(feature = "esp-test-offscreen"))]
+use esp_hal::{
+    dma::{DmaRxBuf, DmaTxBuf},
+    dma_buffers,
+    gpio::{Level, Output, OutputConfig},
+    spi::{
+        Mode as SpiMode,
+        master::{Config as SpiConfig, Spi},
+    },
+    time::Rate,
+};
 
-// Two demo families share this binary. `demo-shapes` / `demo-butterfly`
-// drive the ST7735 directly from their own loop; everything else plugs
-// into mirui::App. Types that only appear on the App path (ECS World,
-// App, FPS resources, perf plugin) are cfg-gated on "not shapes/butterfly".
-
-#[cfg(feature = "app-demo")]
+#[cfg(all(feature = "app-demo", not(feature = "esp-test-offscreen")))]
 use mirui::prelude::App;
-#[cfg(any(feature = "demo-threebody", feature = "demo-coverflow"))]
+#[cfg(all(
+    any(feature = "demo-threebody", feature = "demo-coverflow"),
+    not(feature = "esp-test-offscreen")
+))]
 use mirui::surface::Surface;
+#[cfg(not(feature = "esp-test-offscreen"))]
 use mirui::surface::framebuf::FramebufSurface;
+#[cfg(not(feature = "esp-test-offscreen"))]
 use mirui::types::PhysicalRect;
 
+#[cfg(not(feature = "esp-test-offscreen"))]
 mod board;
-#[cfg(feature = "app-demo")]
+#[cfg(all(feature = "app-demo", not(feature = "esp-test-offscreen")))]
 mod esp_plugins;
 #[cfg(feature = "esp-test-offscreen")]
 mod esp_test_offscreen;
 
+#[cfg(not(feature = "esp-test-offscreen"))]
 use board::{H, St7735, W};
 
 esp_bootloader_esp_idf::esp_app_desc!();
@@ -155,7 +162,10 @@ fn main() -> ! {
     // directly).
     #[cfg(feature = "esp-test-offscreen")]
     {
-        esp_test_offscreen::run();
+        esp_test_offscreen::run_frames(|message| esp_println::println!("{}", message));
+        loop {
+            core::hint::spin_loop();
+        }
     }
 
     #[cfg(not(feature = "esp-test-offscreen"))]

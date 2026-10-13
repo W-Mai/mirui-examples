@@ -106,6 +106,12 @@ Select one `demo-*` feature with `--no-default-features`; `demo-threebody` is th
 
 `perf-fps`, `perf-trace`, `perf-plan-probe`, `frame-capture`, `fps-overlay`, and `spin` add diagnostics or optional animation behavior. `demo-hidpi-downscale` and `demo-hidpi-upscale` change the logical viewport used by the three-body demo.
 
+## Offscreen framebuffer diagnostic
+
+Build the UART-only diagnostic with `cargo build --release --no-default-features --features esp-test-offscreen` from `examples/esp32c3-animation`. It does not initialize the LCD or SPI peripherals. Running the firmware emits eight RGB565Swapped frames between `[FB_BEGIN]` and `[FB_END]`, with base64 `[FB]` lines and FNV-1a hashes. Form-level and Switch-only captures check state changes; clipped regions must match the corresponding full-frame pixels and leave pixels outside the clip cleared. A failed render or comparison panics instead of printing a successful completion marker. `[TEST] done` indicates all checks finished.
+
+The diagnostic uses App preparation for text and output storage, then exercises the low-level region renderer. Its direct ECS mutations isolate raster behavior from animation and input handling; they are not the application authoring API.
+
 ## Target status
 
 | Target | Status | Notes |
