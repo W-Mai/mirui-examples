@@ -97,7 +97,9 @@ impl<'a, S: SpiBus<u8>> St7735<'a, S> {
             let rows_this_batch = BATCH_ROWS.min(h as usize - row);
             for r in 0..rows_this_batch {
                 let src_off = (y as usize + row + r) * stride + x as usize * 2;
-                self.spi.write(&rgb565[src_off..src_off + w as usize * 2]).ok();
+                self.spi
+                    .write(&rgb565[src_off..src_off + w as usize * 2])
+                    .ok();
             }
             row += rows_this_batch;
         }
@@ -126,11 +128,7 @@ pub fn systimer_now() -> u32 {
 }
 
 #[cfg(feature = "fps-overlay")]
-pub fn draw_perf_overlay<S: SpiBus<u8>>(
-    lcd: &mut St7735<S>,
-    fps: u32,
-    budget_violations: u32,
-) {
+pub fn draw_perf_overlay<S: SpiBus<u8>>(lcd: &mut St7735<S>, fps: u32, budget_violations: u32) {
     // RGB565 swapped (LSB-first byte order over SPI):
     //   yellow ≈ 0xFFE0 little-endian → bytes E0 FF
     //   red    ≈ 0xF800 little-endian → bytes 00 F8
