@@ -100,8 +100,8 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "mirui"
-version = "0.50.0"
-source = "git+https://github.com/W-Mai/mirui.git#32235ba0385b14a1c50266ab6e71ac6f3da592aa"
+version = "0.51.0"
+source = "git+https://github.com/W-Mai/mirui.git#bd3ad71d56853e34abbc9639c193b7ed85f488fb"
 dependencies = [
  "critical-section",
  "hashbrown",
@@ -115,8 +115,8 @@ dependencies = [
 
 [[package]]
 name = "mirui-macros"
-version = "0.50.0"
-source = "git+https://github.com/W-Mai/mirui.git#32235ba0385b14a1c50266ab6e71ac6f3da592aa"
+version = "0.51.0"
+source = "git+https://github.com/W-Mai/mirui.git#bd3ad71d56853e34abbc9639c193b7ed85f488fb"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -126,8 +126,8 @@ dependencies = [
 
 [[package]]
 name = "mirx"
-version = "0.50.0"
-source = "git+https://github.com/W-Mai/mirui.git#32235ba0385b14a1c50266ab6e71ac6f3da592aa"
+version = "0.51.0"
+source = "git+https://github.com/W-Mai/mirui.git#bd3ad71d56853e34abbc9639c193b7ed85f488fb"
 dependencies = [
  "ttf-parser",
  "wide",
