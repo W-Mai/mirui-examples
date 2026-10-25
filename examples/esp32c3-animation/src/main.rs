@@ -281,6 +281,8 @@ fn run_normal() -> ! {
             mirui::render::texture::ColorFormat::RGB565Swapped,
             flush_cb,
         );
+        #[cfg(feature = "demo-threebody")]
+        let backend = backend.with_redraw_strategy(mirui::surface::RedrawStrategy::BoundingBox);
 
         let mut app = App::new(backend);
         app.with_default_widgets().with_default_systems();
