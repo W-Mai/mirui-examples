@@ -115,18 +115,6 @@ pub fn delay_ms(ms: u32) {
     }
 }
 
-/// Vendor-specific CSR 0x7E2 — clock frequency assumption was wrong
-/// historically (assumed 160 MHz). Use `esp_hal::time::Instant::now()`
-/// for any wall-clock measurement that must agree with `MonoClock`.
-/// Kept for legacy demos that compare deltas (relative monotonic
-/// counter, not absolute time).
-#[allow(dead_code)]
-pub fn systimer_now() -> u32 {
-    let val: u32;
-    unsafe { core::arch::asm!("csrr {}, 0x7E2", out(reg) val) };
-    val
-}
-
 #[cfg(feature = "fps-overlay")]
 pub fn draw_perf_overlay<S: SpiBus<u8>>(lcd: &mut St7735<S>, fps: u32, budget_violations: u32) {
     // RGB565 swapped (LSB-first byte order over SPI):

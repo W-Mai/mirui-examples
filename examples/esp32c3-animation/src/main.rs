@@ -180,7 +180,7 @@ fn run_normal() -> ! {
 
     #[cfg(all(feature = "app-demo", feature = "perf-fps"))]
     unsafe {
-        mirui::render::quad_perf::CLOCK = || board::systimer_now() as u64;
+        mirui::render::quad_perf::CLOCK = esp_plugins::esp_clock_ns;
     }
 
     let (rx_buf, rx_desc, tx_buf, tx_desc) = dma_buffers!(32000);

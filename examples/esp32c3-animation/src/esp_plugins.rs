@@ -7,7 +7,7 @@ use mirui::surface::Surface;
 
 // esp_hal Instant uses the full 52-bit systimer; csr 0x7E2 wraps
 // every 26.8s and was the source of the v0.10-v0.17 fps drift.
-fn esp_clock_ns() -> u64 {
+pub(super) fn esp_clock_ns() -> u64 {
     let micros = esp_hal::time::Instant::now()
         .duration_since_epoch()
         .as_micros();
