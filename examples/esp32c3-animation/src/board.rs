@@ -1,5 +1,3 @@
-#[cfg(feature = "fps-overlay")]
-use alloc::vec;
 use embedded_hal::spi::SpiBus;
 use esp_hal::gpio::Output;
 
@@ -10,6 +8,8 @@ pub struct St7735<'a, S: SpiBus<u8>> {
     pub spi: S,
     pub dc: Output<'a>,
     pub cs: Output<'a>,
+    #[cfg(feature = "fps-overlay")]
+    pub overlay_font: mirui::render::font::Font,
 }
 
 impl<'a, S: SpiBus<u8>> St7735<'a, S> {
@@ -132,9 +132,15 @@ pub fn draw_perf_overlay<S: SpiBus<u8>>(lcd: &mut St7735<S>, fps: u32, budget_vi
     // RGB565 swapped (LSB-first byte order over SPI):
     //   yellow ≈ 0xFFE0 little-endian → bytes E0 FF
     //   red    ≈ 0xF800 little-endian → bytes 00 F8
-    draw_overlay_line(lcd, 2, fps, b'f', [0xE0, 0xFF]);
+    draw_overlay_line(lcd, 2, fps, b'f', mirui::types::Color::rgb(255, 255, 0));
     if budget_violations != 0 {
-        draw_overlay_line(lcd, 12, budget_violations, b'!', [0x00, 0xF8]);
+        draw_overlay_line(
+            lcd,
+            12,
+            budget_violations,
+            b'!',
+            mirui::types::Color::rgb(255, 0, 0),
+        );
     }
 }
 
@@ -144,7 +150,7 @@ fn draw_overlay_line<S: SpiBus<u8>>(
     sy: u16,
     value: u32,
     suffix: u8,
-    px: [u8; 2],
+    color: mirui::types::Color,
 ) {
     let mut num = [0u8; 8];
     let mut len = 0;
@@ -166,20 +172,41 @@ fn draw_overlay_line<S: SpiBus<u8>>(
     let fw: u16 = (len as u16) * 8;
     let fh: u16 = 8;
     let sx = W - fw - 2;
+    let mut pixels = [0u8; 8 * 8 * 8 * 2];
+    {
+        use mirui::render::Canvas;
+        let texture = mirui::render::texture::Texture::new(
+            &mut pixels,
+            fw,
+            fh,
+            mirui::render::texture::ColorFormat::RGB565,
+        )
+        .expect("bounded overlay storage");
+        let mut renderer = mirui::render::sw::SwRenderer::new(texture);
+        for (index, byte) in num[..len].iter().enumerate() {
+            let Some(glyph) = lcd.overlay_font.map_char(char::from(*byte)) else {
+                continue;
+            };
+            let run = [mirui::text::PositionedGlyph::new(
+                glyph,
+                mirui::text::FlowPoint { x: 0, y: 0 },
+            )];
+            renderer.draw_glyph_run(
+                &mirui::types::Point::new(index as i32 * 8, 0),
+                &run,
+                &lcd.overlay_font,
+                &mirui::types::Rect::new(0, 0, fw, fh),
+                &color,
+                255,
+            );
+        }
+        renderer.flush().expect("resident overlay font");
+    }
     lcd.set_window(sx, sy, sx + fw - 1, sy + fh - 1);
     lcd.cs.set_low();
     lcd.dc.set_high();
-    let mut row_buf = vec![0u8; fw as usize * 2];
-    for row in 0..fh as usize {
-        for col in 0..fw as usize {
-            let ci = col / 8;
-            let bit = col % 8;
-            let glyph = mirui::render::font::glyph(num[ci]);
-            let on = glyph[row] & (0x80 >> bit) != 0;
-            row_buf[col * 2] = if on { px[0] } else { 0x00 };
-            row_buf[col * 2 + 1] = if on { px[1] } else { 0x00 };
-        }
-        lcd.spi.write(&row_buf).ok();
-    }
+    lcd.spi
+        .write(&pixels[..usize::from(fw) * usize::from(fh) * 2])
+        .ok();
     lcd.cs.set_high();
 }

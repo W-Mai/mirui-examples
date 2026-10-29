@@ -204,7 +204,13 @@ fn run_normal() -> ! {
     let mut rst = Output::new(peripherals.GPIO3, Level::High, OutputConfig::default());
     let mut bl = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());
 
-    let mut lcd = St7735 { spi, dc, cs };
+    let mut lcd = St7735 {
+        spi,
+        dc,
+        cs,
+        #[cfg(feature = "fps-overlay")]
+        overlay_font: mirui::render::font::Font::default(),
+    };
     lcd.init(&mut rst);
     bl.set_high();
 

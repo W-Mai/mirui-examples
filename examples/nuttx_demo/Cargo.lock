@@ -100,8 +100,8 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "mirui"
-version = "0.52.0"
-source = "git+https://github.com/W-Mai/mirui.git#44b8ecf04455fb93732940d7793342c603f5b8fd"
+version = "0.53.0"
+source = "git+https://github.com/W-Mai/mirui.git#2ed68f1b98888ab844e4a4ae566dfbfce34c75cf"
 dependencies = [
  "critical-section",
  "hashbrown",
@@ -111,12 +111,13 @@ dependencies = [
  "rustc-hash",
  "textflow-rs",
  "web-time",
+ "windows-sys",
 ]
 
 [[package]]
 name = "mirui-macros"
-version = "0.52.0"
-source = "git+https://github.com/W-Mai/mirui.git#44b8ecf04455fb93732940d7793342c603f5b8fd"
+version = "0.53.0"
+source = "git+https://github.com/W-Mai/mirui.git#2ed68f1b98888ab844e4a4ae566dfbfce34c75cf"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -126,8 +127,8 @@ dependencies = [
 
 [[package]]
 name = "mirx"
-version = "0.52.0"
-source = "git+https://github.com/W-Mai/mirui.git#44b8ecf04455fb93732940d7793342c603f5b8fd"
+version = "0.53.0"
+source = "git+https://github.com/W-Mai/mirui.git#2ed68f1b98888ab844e4a4ae566dfbfce34c75cf"
 dependencies = [
  "ttf-parser",
  "wide",
@@ -303,6 +304,21 @@ checksum = "0ce5da8ecb62bcd8ec8b7ea19f69a51275e91299be594ea5cc6ef7819e16cd03"
 dependencies = [
  "bytemuck",
  "safe_arch",
+]
+
+[[package]]
+name = "windows-link"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
+
+[[package]]
+name = "windows-sys"
+version = "0.61.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
+dependencies = [
+ "windows-link",
 ]
 
 [[package]]

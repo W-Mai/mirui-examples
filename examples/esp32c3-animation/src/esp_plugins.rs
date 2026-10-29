@@ -36,45 +36,69 @@ where
 }
 
 /// `FpsSummaryPlugin` sink. Side effect: writes `crate::FPS_DISPLAY`
-/// for the LCD overlay. Per-span detail and Chrome-trace JSON come
+/// with Tick callback cadence for the LCD overlay, not display rate.
+/// Per-span detail and Chrome-trace JSON come
 /// from `PerfReportPlugin` instead of being re-implemented here.
 #[cfg(feature = "perf-fps")]
 pub fn esp_perf_sink(report: FpsSummary<'_>) {
-    let fps = 1_000_000_000u64
-        .checked_div(report.avg_frame_ns)
-        .unwrap_or(0);
-    #[cfg(feature = "fps-overlay")]
-    unsafe {
-        crate::FPS_DISPLAY = fps as u32;
-    }
-    esp_println::println!(
-        "[perf] {} frames | frame {}us ({} fps) = input {} + systems {} + layout {} + render {} + flush {} + seed {}",
-        report.frames,
-        report.avg_frame_ns / 1000,
-        fps,
-        report.avg_input_ns / 1000,
-        report.avg_systems_ns / 1000,
-        report.avg_layout_ns / 1000,
-        report.avg_render_ns / 1000,
-        report.avg_flush_ns / 1000,
-        report.avg_seed_prev_ns / 1000,
-    );
-    if let Some(s) = report.stats {
+    for operation in report
+        .operations
+        .iter()
+        .filter(|operation| operation.count != 0)
+    {
+        let rate = report.operation_rate_hz(operation.operation);
+        #[cfg(feature = "fps-overlay")]
+        if operation.operation == mirui::ecs::FrameOperation::Tick {
+            unsafe {
+                crate::FPS_DISPLAY = rate.unwrap_or(0.0) as u32;
+            }
+        }
         esp_println::println!(
-            "[perf] window={} min {}us max {}us p99 {}us jitter {}us",
-            s.len(),
-            s.min() / 1000,
-            s.max() / 1000,
-            s.p99() / 1000,
-            s.jitter() / 1000,
+            "[perf] {:?} operations {} | wall {:?}ns | rate {:?}/s | CPU {:?}ns | display rate unavailable",
+            operation.operation,
+            operation.count,
+            operation.wall_nanos(),
+            rate,
+            operation.thread_cpu_nanos(),
         );
+        for phase in [
+            mirui::ecs::FramePhase::Input,
+            mirui::ecs::FramePhase::Systems,
+            mirui::ecs::FramePhase::Layout,
+            mirui::ecs::FramePhase::Render,
+            mirui::ecs::FramePhase::Flush,
+            mirui::ecs::FramePhase::SeedPrev,
+        ] {
+            if let Some(ns) = operation.phase_nanos(phase) {
+                esp_println::println!(
+                    "[phase] {:?} {}ns samples={}",
+                    phase,
+                    ns,
+                    operation.phase_samples(phase)
+                );
+            }
+        }
+        if let Some(stats) = report
+            .stats
+            .and_then(|stats| stats.summary(operation.operation, operation.latest_phases))
+        {
+            esp_println::println!(
+                "[perf] phase budget count={} avg={}ns min={}ns max={}ns p99={}ns jitter={}ns",
+                stats.count,
+                stats.avg_nanos,
+                stats.min_nanos,
+                stats.max_nanos,
+                stats.p99_nanos,
+                stats.jitter_nanos(),
+            );
+        }
     }
 }
 
 /// `PerfReportPlugin` sink — per-span aggregates over `esp_println`.
 #[cfg(feature = "perf-trace")]
 pub fn esp_span_report_sink(report: &mirui::app::plugins::PerfReport) {
-    for s in &report.stage_stats {
+    for s in report.stage_stats {
         if s.count == 0 {
             continue;
         }
@@ -86,7 +110,7 @@ pub fn esp_span_report_sink(report: &mirui::app::plugins::PerfReport) {
             s.max_ns / 1000,
         );
     }
-    for s in &report.systems {
+    for s in report.systems {
         if s.call_count == 0 {
             continue;
         }

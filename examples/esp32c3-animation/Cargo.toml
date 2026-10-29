@@ -15,8 +15,8 @@ fps-overlay = []
 # through the quad path (SDF / supersample) and adds per-frame cost.
 spin = []
 
-# Low-overhead FPS / p99 / jitter / budget reports. The mirui `perf`
-# feature provides frame timing without enabling detailed span capture.
+# Operation wall time, callback cadence and phase budget reports.
+# Callback cadence does not measure native display refresh.
 perf-fps = ["mirui/perf"]
 
 # Adds per-span aggregates and chrome-trace JSON over UART.
