@@ -49,6 +49,10 @@ espflash flash target/riscv32imc-unknown-none-elf/release/mirui-esp32c3 \
 
 > Serial port name may vary. Use `ls /dev/cu.usb*` to find yours.
 
+## Release optimization
+
+The ESP32-C3 animation example uses optimization level 3, LTO, and one codegen unit for rendering throughput. This produces a larger application image than size optimization. For a size-sensitive build, run `CARGO_PROFILE_RELEASE_OPT_LEVEL=z cargo build --release` and check the generated image against the device partition size.
+
 ## Local mirui Development
 
 By default this repo pulls `mirui` and `mirui-macros` from their
