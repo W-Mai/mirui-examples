@@ -35,6 +35,8 @@ frame-capture = []
 # systems, plugins). Consumers never set this directly — each App-family
 # demo enables it implicitly via its own feature.
 app-demo = []
+# Register the complete widget catalog for scenes beyond Style and Image.
+full-widgets = ["app-demo"]
 
 # Render form and Switch captures, check clipped pixels against full
 # frames, and emit base64 frame dumps with FNV-1a hashes over UART.
@@ -42,23 +44,23 @@ esp-test-offscreen = []
 
 # App-family demos (ECS-based).
 demo-threebody = ["app-demo"]
-demo-subpixel = ["app-demo"]
-demo-particles = ["app-demo"]
-demo-flipcard = ["app-demo"]     # 2.5D single-card flip around Y with perspective.
-demo-coverflow = ["app-demo"]
-demo-interaction = ["app-demo"]
-demo-widgets = ["app-demo"]
-demo-effects = ["app-demo"]     # Mirror + BackgroundBlur over a tile grid.
-demo-kinetic = ["app-demo"]
-demo-curve-text-compact = ["app-demo"]
+demo-subpixel = ["full-widgets"]
+demo-particles = ["full-widgets"]
+demo-flipcard = ["full-widgets"]     # 2.5D single-card flip around Y with perspective.
+demo-coverflow = ["full-widgets"]
+demo-interaction = ["full-widgets"]
+demo-widgets = ["full-widgets"]
+demo-effects = ["full-widgets"]     # Mirror + BackgroundBlur over a tile grid.
+demo-kinetic = ["full-widgets"]
+demo-curve-text-compact = ["full-widgets"]
 
 # shapes and butterfly used to drive FramebufSurface directly; from
 # v0.28 they sit inside mirui::gallery::demos as Canvas-style custom
 # Views and run on top of mirui::App like every other demo.
-demo-shapes = ["app-demo"]
-demo-butterfly = ["app-demo"]
-demo-life = ["app-demo"]     # Conway's Game of Life on a toroidal grid.
-demo-typography = ["app-demo"]
+demo-shapes = ["full-widgets"]
+demo-butterfly = ["full-widgets"]
+demo-life = ["full-widgets"]     # Conway's Game of Life on a toroidal grid.
+demo-typography = ["full-widgets"]
 # HiDPI downscale: physical framebuffer stays at 128×128, logical space
 # expands to 256×256 (scale = 0.5). Layout is written in logical units;
 # the backend downsamples during rasterization. Pairs with demo-threebody

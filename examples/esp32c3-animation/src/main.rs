@@ -291,7 +291,13 @@ fn run_normal() -> ! {
         let backend = backend.with_redraw_strategy(mirui::surface::RedrawStrategy::BoundingBox);
 
         let mut app = App::new(backend);
-        app.with_default_widgets().with_default_systems();
+        if cfg!(feature = "full-widgets") {
+            app.with_default_widgets();
+        } else {
+            app.with_widget(mirui::ui::style_view::view())
+                .with_widget(mirui::ui::widgets::image::view());
+        }
+        app.with_default_systems();
 
         // SystimerClockPlugin populates MonoClock; gallery demos read it
         // during build_widgets to seed time-driven animations.

@@ -108,6 +108,8 @@ Select one `demo-*` feature with `--no-default-features`; `demo-threebody` is th
 | `demo-typography` | Gallery Typography Lab with bundled MIRX fonts |
 | `demo-interaction` | Gallery Interaction Lab with typed input handlers |
 
+The three-body scene registers only the Style and Image views it uses. Other App scenes enable the complete widget catalog through their feature dependencies; combining them with the three-body feature preserves that registration.
+
 `perf-fps`, `perf-trace`, `perf-plan-probe`, `frame-capture`, `fps-overlay`, and `spin` add diagnostics or optional animation behavior. Performance reports distinguish operation wall time, callback cadence and phase budgets; callback cadence is not native display refresh. `demo-hidpi-downscale` and `demo-hidpi-upscale` change the logical viewport used by the three-body demo.
 
 ## Offscreen framebuffer diagnostic
