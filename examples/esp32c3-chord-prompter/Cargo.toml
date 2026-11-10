@@ -1,0 +1,36 @@
+[package]
+name = "mirui-esp32c3-chord-prompter"
+version = "0.0.1"
+edition = "2024"
+
+[workspace]
+
+[features]
+default = []
+heap-stats = ["esp-alloc/internal-heap-stats"]
+
+[dependencies]
+esp-hal = { version = "=1.1.0", features = ["esp32c3", "unstable"] }
+esp-println = { version = "0.14", features = ["esp32c3"] }
+esp-alloc = "0.10"
+esp-bootloader-esp-idf = { version = "0.5", features = ["esp32c3"] }
+esp-radio = { version = "0.18", features = ["esp32c3", "ble", "unstable"] }
+esp-rtos = { version = "0.3", features = ["esp32c3", "embassy", "esp-radio", "esp-alloc"] }
+embassy-executor = "0.10"
+embassy-futures = "0.1"
+embassy-time = "0.5"
+embassy-sync = "0.7"
+static_cell = "2.1"
+trouble-host = { version = "0.6", default-features = false, features = ["peripheral", "gatt", "derive", "default-packet-pool-mtu-64", "default-packet-pool-size-8"] }
+mirui = { git = "https://github.com/W-Mai/mirui.git", default-features = false, features = ["gallery"] }
+embedded-hal = "1.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+debug = false
+panic = "abort"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("fps-overlay"))'] }

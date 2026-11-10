@@ -86,6 +86,7 @@ repo's tree.
 | Directory | Verified target | Display | Description |
 |-----------|-----------------|---------|-------------|
 | `esp32c3-animation` | ESP32-C3 Super Mini | ST7735S 128 × 128 SPI | Autonomous gallery demos, dirty-region rendering, input timelines, curve text, effects, and performance probes |
+| `esp32c3-chord-prompter` | ESP32-C3 Super Mini | ST7735S 128 × 128 SPI | Browser BLE song uploads, chord prompting and beat-aligned controls |
 | `nuttx_demo` | NuttX `rv-virt:fb` | `/dev/fb0` through QEMU virtio-gpu | Framebuffer, touch, keyboard, partial refresh, and RGB565/RGBA8888 integration |
 
 ## ESP32-C3 demo features
