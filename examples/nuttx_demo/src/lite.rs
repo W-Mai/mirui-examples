@@ -39,7 +39,7 @@ where
 {
     app.add_plugin(StdInstantClockPlugin);
     app.add_resource(dark_with_accent());
-    let theme_cycle = app.add_model(ThemeCycle::default());
+    let theme_cycle = app.add_model(ThemeCycle::default()).finish();
     app.add_timer(cycle::timer(theme_cycle));
 
     let root = app
