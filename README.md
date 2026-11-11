@@ -1,15 +1,9 @@
-<a href="https://github.com/W-Mai/mirui">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg" />
-    <img src="assets/logo-light.svg" alt="Mirui" width="252" />
-  </picture>
-</a>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme-hero-dark.svg" />
+  <img src="assets/readme-hero-light.svg" alt="Mirui hardware examples featuring ESP32-C3 Chord Prompter and NuttX Widget Workbench" width="1280" />
+</picture>
 
-# Hardware examples
-
-ESP32-C3 firmware and a NuttX framebuffer demo.
-
-[Examples](#examples) · [Wiring](#esp32-c3-wiring) · [Quick start](#esp32-c3-quick-start) · [Demo features](#demo-features)
+[Mirui](https://github.com/W-Mai/mirui) · [Examples](#examples) · [Wiring](#esp32-c3-wiring) · [Quick start](#esp32-c3-quick-start) · [Demos](#demo-features)
 
 ## Examples
 
