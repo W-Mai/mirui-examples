@@ -6,7 +6,10 @@ Hardware examples for [mirui](https://github.com/W-Mai/mirui) — running on rea
 
 - **MCU**: ESP32-C3 Super Mini
 - **Display**: ST7735S 128×128 SPI TFT (MSP1443)
-- **Wiring**:
+
+The animation and chord prompter examples use the same wiring.
+
+![ESP32-C3 Super Mini to ST7735S TFT wiring diagram](assets/esp32c3-st7735s-wiring.svg)
 
 | Display | GPIO |
 |---------|------|

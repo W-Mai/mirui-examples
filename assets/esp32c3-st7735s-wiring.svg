@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="568" viewBox="0 0 1080 568" role="img" aria-labelledby="title description">
+  <title id="title">ESP32-C3 Super Mini to ST7735S TFT wiring</title>
+  <desc id="description">ESP32-C3 viewed from the component side with USB-C at the top. The MSP1443 display is viewed from the back with its header on the left. GPIO5 connects to SCK, GPIO4 to SDA, GPIO6 to CS, GPIO7 to A0, GPIO3 to RESET, GPIO2 to LED, 3V3 to VCC, and GND to GND.</desc>
+  <defs>
+    <linearGradient id="pcb" x2="1" y2="1">
+      <stop stop-color="#344244"/><stop offset="1" stop-color="#10181c"/>
+    </linearGradient>
+    <linearGradient id="red" x2="1" y2="1">
+      <stop stop-color="#dc544b"/><stop offset="1" stop-color="#a93036"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#75818b"/><stop offset=".17" stop-color="#dce4e9"/><stop offset=".62" stop-color="#f0f4f6"/><stop offset="1" stop-color="#909da7"/>
+    </linearGradient>
+    <linearGradient id="gold" x2="0" y2="1">
+      <stop stop-color="#ffe6a3"/><stop offset="1" stop-color="#b27f35"/>
+    </linearGradient>
+    <filter id="shadow" x="-.2" y="-.2" width="1.4" height="1.5">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#132437" flood-opacity=".27"/>
+    </filter>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r=".85" class="grid-dot"/>
+    </pattern>
+    <g id="pad">
+      <rect x="-9" y="-8" width="18" height="16" rx="6" fill="url(#gold)" stroke="#a98140"/>
+      <circle r="4.4" fill="#151c21" stroke="#e4bd6c" stroke-width="1.5"/>
+    </g>
+    <g id="header-pin">
+      <rect x="-7" y="-7" width="14" height="14" rx="2" fill="#262426" stroke="#703338"/>
+      <rect x="-3.5" y="-3.5" width="7" height="7" rx="1" fill="url(#gold)"/>
+    </g>
+    <g id="capacitor">
+      <rect width="13" height="7" rx="1" fill="#c1ad8f"/>
+      <path d="M0 0H2V7H0Z M11 0H13V7H11Z" fill="#f0e5d3"/>
+    </g>
+    <g id="switch">
+      <rect width="38" height="24" rx="4" fill="#0f1519"/>
+      <rect x="2" y="1" width="34" height="20" rx="3" fill="url(#steel)"/>
+      <circle cx="19" cy="11" r="6" fill="#4a5259" stroke="#8f9ca5"/>
+    </g>
+    <style>
+      text { font-family: system-ui, -apple-system, sans-serif; fill: #1c2b35; }
+      .bg { fill: #f4f7f9; }
+      .grid-dot { fill: #c5d1db; opacity: .52; }
+      .secondary { fill: #4e6271; }
+      .silk { fill: #f7ede1; font: 650 14px ui-monospace, Menlo, monospace; dominant-baseline: middle; }
+      .mark { fill: #e5ded3; font: 600 10px ui-monospace, Menlo, monospace; }
+      .pin-tag { fill: #fff; font: 700 13px ui-monospace, Menlo, monospace; dominant-baseline: middle; text-anchor: middle; }
+      .insulation { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .wire-edge { stroke: #192631; stroke-width: 9; opacity: .84; }
+      .wire { stroke: currentColor; stroke-width: 5.5; }
+      .wire-glint { stroke: #fff; stroke-width: 1; opacity: .32; }
+      @media (prefers-color-scheme: dark) {
+        text { fill: #ecf4f9; }
+        .bg { fill: #101922; }
+        .grid-dot { fill: #425264; }
+        .secondary { fill: #aec0ce; }
+        .wire-edge { stroke: #02070c; }
+      }
+    </style>
+  </defs>
+  <rect class="bg" width="1080" height="568" rx="24"/>
+  <rect x="24" y="91" width="1032" height="432" rx="16" fill="url(#grid)"/>
+  <text x="34" y="51" font-size="30" font-weight="730">ESP32-C3 display wiring</text>
+  <text class="secondary" x="35" y="77" font-size="15">Super Mini · ST7735S 128 × 128 SPI TFT</text>
+
+  <g aria-label="ESP32-C3 Super Mini front">
+    <rect x="155" y="132" width="201" height="284" rx="11" fill="#0b1217" filter="url(#shadow)"/>
+    <rect x="155" y="129" width="201" height="282" rx="10" fill="url(#pcb)" stroke="#516268"/>
+    <path d="M175 143H336 M175 399H336" stroke="#6b837b" opacity=".3"/>
+    <g fill="none" stroke="#738b75" stroke-width="1.7" opacity=".53">
+      <path d="M171 161H192L210 179H226 M173 192H202L220 210 M172 223H199L224 248 M172 254H200L231 285 M343 193H319L303 209H284 M345 225H322L300 247H281 M344 256H327L306 277H283 M344 290H315L291 314 M344 321H312L287 345H266 M343 352H309L284 369H241 M173 352H204L233 330"/>
+      <path d="M259 192V216L242 234 M257 298V350L267 365 M190 301H210L224 315"/>
+    </g>
+    <g fill="#a7ae84" opacity=".73">
+      <circle cx="202" cy="192" r="2.4"/><circle cx="199" cy="223" r="2.4"/><circle cx="322" cy="225" r="2.4"/>
+      <circle cx="319" cy="193" r="2.4"/><circle cx="315" cy="290" r="2.4"/><circle cx="309" cy="352" r="2.4"/>
+      <circle cx="208" cy="300" r="2.4"/><circle cx="267" cy="365" r="2.4"/>
+    </g>
+    <rect x="214" y="118" width="83" height="76" rx="8" fill="#0d151b"/>
+    <rect x="215" y="115" width="81" height="73" rx="7" fill="url(#steel)" stroke="#667781"/>
+    <rect x="219" y="117" width="73" height="15" rx="5" fill="#27333e" stroke="#f5f8fa" stroke-width="1.5"/>
+    <path d="M232 125H279" stroke="#a6b0ba" stroke-width="2" stroke-linecap="round"/>
+    <path d="M222 138H288M222 181H289" stroke="#7c8a94" opacity=".55"/>
+    <text class="mark" x="255" y="162" text-anchor="middle" style="fill:#3d4d59">USB-C</text>
+    <use href="#switch" x="209" y="200"/><use href="#switch" x="263" y="200"/>
+    <text class="mark" x="228" y="236" text-anchor="middle">BOOT</text>
+    <text class="mark" x="282" y="236" text-anchor="middle">RST</text>
+    <rect x="221" y="250" width="69" height="69" rx="5" fill="#11181b" stroke="#4f5557"/>
+    <rect x="225" y="254" width="61" height="61" rx="3" fill="#272f33"/>
+    <circle cx="231" cy="260" r="2" fill="#8c9699"/>
+    <text class="mark" x="255" y="284" text-anchor="middle">ESP32-C3</text>
+    <text class="mark" x="255" y="298" text-anchor="middle" opacity=".64">RISCV</text>
+    <rect x="219" y="330" width="28" height="17" rx="2" fill="url(#steel)" stroke="#929ba0"/>
+    <path d="M225 339H241" stroke="#64717a"/>
+    <rect x="271" y="337" width="17" height="12" rx="2" fill="#0d1418" stroke="#667573"/>
+    <use href="#capacitor" x="201" y="257"/><use href="#capacitor" x="201" y="271"/><use href="#capacitor" x="201" y="289"/>
+    <use href="#capacitor" x="298" y="250"/><use href="#capacitor" x="298" y="266"/><use href="#capacitor" x="295" y="315"/>
+    <use href="#capacitor" x="251" y="340"/><use href="#capacitor" x="250" y="353"/>
+    <rect x="228" y="380" width="53" height="17" rx="2" fill="#bb8270" stroke="#ecd1ae"/>
+    <path d="M234 383H275" stroke="#ecb6a1"/>
+    <text class="mark" x="255" y="371" text-anchor="middle">SUPER MINI</text>
+    <use href="#pad" x="168" y="161"/><text class="silk" x="182" y="161" text-anchor="start">5</text>
+    <use href="#pad" x="168" y="192"/><text class="silk" x="182" y="192" text-anchor="start">6</text>
+    <use href="#pad" x="168" y="223"/><text class="silk" x="182" y="223" text-anchor="start">7</text>
+    <use href="#pad" x="168" y="254"/><text class="silk" x="182" y="254" text-anchor="start">8</text>
+    <use href="#pad" x="168" y="285"/><text class="silk" x="182" y="285" text-anchor="start">9</text>
+    <use href="#pad" x="168" y="316"/><text class="silk" x="182" y="316" text-anchor="start">10</text>
+    <use href="#pad" x="168" y="347"/><text class="silk" x="182" y="347" text-anchor="start">20</text>
+    <use href="#pad" x="168" y="378"/><text class="silk" x="182" y="378" text-anchor="start">21</text>
+    <use href="#pad" x="343" y="161"/><text class="silk" x="330" y="161" text-anchor="end">5V</text>
+    <use href="#pad" x="343" y="192"/><text class="silk" x="330" y="192" text-anchor="end">GND</text>
+    <use href="#pad" x="343" y="223"/><text class="silk" x="330" y="223" text-anchor="end">3V3</text>
+    <use href="#pad" x="343" y="254"/><text class="silk" x="330" y="254" text-anchor="end">4</text>
+    <use href="#pad" x="343" y="285"/><text class="silk" x="330" y="285" text-anchor="end">3</text>
+    <use href="#pad" x="343" y="316"/><text class="silk" x="330" y="316" text-anchor="end">2</text>
+    <use href="#pad" x="343" y="347"/><text class="silk" x="330" y="347" text-anchor="end">1</text>
+    <use href="#pad" x="343" y="378"/><text class="silk" x="330" y="378" text-anchor="end">0</text>
+  </g>
+  <g aria-label="MSP1443 display back">
+    <rect x="741" y="149" width="304" height="244" rx="6" fill="#692229" filter="url(#shadow)"/>
+    <rect x="741" y="145" width="304" height="244" rx="5" fill="url(#red)" stroke="#e9897b"/>
+    <path d="M749 153H1036V381H749Z" fill="none" stroke="#f5a699" opacity=".45"/>
+    <path d="M755 165V371" stroke="#28272a" stroke-width="17" stroke-linecap="round"/>
+    <g fill="none" stroke="#782830" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".72">
+      <path d="M765 168H836L853 184H891 M765 196H824L841 213H874 M765 224H830L856 250H900 M765 252H810L842 284H877 M765 280H816L836 300V336H891 M765 308H813L832 326V353H921 M765 336H805L828 359H907 M765 364H810L836 373H925"/>
+      <path d="M900 250H935L956 271V315 M886 334H937L947 345H975 M930 190H1005V225 M932 282H988"/>
+    </g>
+    <g fill="#792e33" stroke="#e58073">
+      <circle cx="891" cy="184" r="3"/><circle cx="874" cy="213" r="3"/><circle cx="900" cy="250" r="3"/>
+      <circle cx="877" cy="284" r="3"/><circle cx="921" cy="353" r="3"/><circle cx="988" cy="282" r="3"/>
+      <circle cx="975" cy="345" r="3"/><circle cx="1005" cy="225" r="3"/><circle cx="937" cy="334" r="3"/>
+    </g>
+    <rect x="848" y="164" width="29" height="14" rx="2" fill="#eee0cf" opacity=".75"/>
+    <rect x="852" y="168" width="21" height="6" rx="1" fill="#292a29"/>
+    <text class="mark" x="883" y="175">R1</text>
+    <rect x="867" y="307" width="27" height="18" rx="2" fill="#27292b" stroke="#de9690"/>
+    <path d="M871 326v5m16-5v5m-8-25v-5" stroke="#eee1c9" stroke-width="3"/>
+    <text class="mark" x="899" y="320">U1</text>
+    <use href="#capacitor" x="884" y="348"/>
+    <text class="mark" x="901" y="356">C1</text>
+    <text class="mark" x="1018" y="172" text-anchor="end">1.44″ SPI</text>
+    <text class="mark" x="1018" y="188" text-anchor="end">128 × 128</text>
+    <text x="959" y="251" text-anchor="middle" class="silk" style="font-size:18px">MSP1443</text>
+    <text class="mark" x="959" y="267" text-anchor="middle">ST7735S</text>
+    <text class="mark" x="1018" y="372" text-anchor="end">J1</text>
+    <use href="#header-pin" x="755" y="168"/><text class="silk" x="773" y="168">LED</text>
+    <use href="#header-pin" x="755" y="196"/><text class="silk" x="773" y="196">SCK</text>
+    <use href="#header-pin" x="755" y="224"/><text class="silk" x="773" y="224">SDA</text>
+    <use href="#header-pin" x="755" y="252"/><text class="silk" x="773" y="252">A0</text>
+    <use href="#header-pin" x="755" y="280"/><text class="silk" x="773" y="280">RESET</text>
+    <use href="#header-pin" x="755" y="308"/><text class="silk" x="773" y="308">CS</text>
+    <use href="#header-pin" x="755" y="336"/><text class="silk" x="773" y="336">GND</text>
+    <use href="#header-pin" x="755" y="364"/><text class="silk" x="773" y="364">VCC</text>
+  </g>
+  <g color="#42b8b1" aria-label="GPIO5 to SCK"><title>GPIO5 → SCK</title>
+    <path d="M168 161H81Q65 161 65 177V495Q65 512 82 512H503C611 512 550 196 739 196H755" class="insulation wire-edge"/>
+    <path d="M168 161H81Q65 161 65 177V495Q65 512 82 512H503C611 512 550 196 739 196H755" class="insulation wire"/>
+    <path d="M168 161H81Q65 161 65 177V495Q65 512 82 512H503C611 512 550 196 739 196H755" class="insulation wire-glint" transform="translate(0,-1)"/>
+  </g>
+  <g color="#ba8cf0" aria-label="GPIO6 to CS"><title>GPIO6 → CS</title>
+    <path d="M168 192H104Q88 192 88 208V473Q88 489 104 489H520C635 489 607 308 739 308H755" class="insulation wire-edge"/>
+    <path d="M168 192H104Q88 192 88 208V473Q88 489 104 489H520C635 489 607 308 739 308H755" class="insulation wire"/>
+    <path d="M168 192H104Q88 192 88 208V473Q88 489 104 489H520C635 489 607 308 739 308H755" class="insulation wire-glint" transform="translate(0,-1)"/>
+  </g>
+  <g color="#598ced" aria-label="GPIO7 to A0"><title>GPIO7 → A0</title>
+    <path d="M168 223H127Q111 223 111 239V452Q111 467 127 467H484C587 467 588 252 739 252H755" class="insulation wire-edge"/>
+    <path d="M168 223H127Q111 223 111 239V452Q111 467 127 467H484C587 467 588 252 739 252H755" class="insulation wire"/>
+    <path d="M168 223H127Q111 223 111 239V452Q111 467 127 467H484C587 467 588 252 739 252H755" class="insulation wire-glint" transform="translate(0,-1)"/>
+  </g>
+  <g color="#596b7d" aria-label="GND to GND"><title>GND → GND</title>
+    <path d="M343 192H385C504 192 580 336 739 336H755" class="insulation wire-edge"/>
+    <path d="M343 192H385C504 192 580 336 739 336H755" class="insulation wire"/>
+    <path d="M343 192H385C504 192 580 336 739 336H755" class="insulation wire-glint" transform="translate(0,-1)"/>
+  </g>
+  <g color="#e95c5e" aria-label="3V3 to VCC"><title>3V3 → VCC</title>
+    <path d="M343 223H394C528 223 571 364 739 364H755" class="insulation wire-edge"/>
+    <path d="M343 223H394C528 223 571 364 739 364H755" class="insulation wire"/>
+    <path d="M343 223H394C528 223 571 364 739 364H755" class="insulation wire-glint" transform="translate(0,-1)"/>
+  </g>
+  <g color="#46a76b" aria-label="GPIO4 to SDA"><title>GPIO4 → SDA</title>
+    <path d="M343 254H400C526 254 601 224 739 224H755" class="insulation wire-edge"/>
+    <path d="M343 254H400C526 254 601 224 739 224H755" class="insulation wire"/>
+    <path d="M343 254H400C526 254 601 224 739 224H755" class="insulation wire-glint" transform="translate(0,-1)"/>
+  </g>
+  <g color="#e2a749" aria-label="GPIO3 to RESET"><title>GPIO3 → RESET</title>
+    <path d="M343 285H397C521 285 611 280 739 280H755" class="insulation wire-edge"/>
+    <path d="M343 285H397C521 285 611 280 739 280H755" class="insulation wire"/>
+    <path d="M343 285H397C521 285 611 280 739 280H755" class="insulation wire-glint" transform="translate(0,-1)"/>
+  </g>
+  <g color="#df79a3" aria-label="GPIO2 to LED"><title>GPIO2 → LED</title>
+    <path d="M343 316H396C516 316 585 168 739 168H755" class="insulation wire-edge"/>
+    <path d="M343 316H396C516 316 585 168 739 168H755" class="insulation wire"/>
+    <path d="M343 316H396C516 316 585 168 739 168H755" class="insulation wire-glint" transform="translate(0,-1)"/>
+  </g>
+  <text x="255" y="434" text-anchor="middle" font-size="15" font-weight="680">ESP32-C3 Super Mini</text>
+  <text class="secondary" x="255" y="453" text-anchor="middle" font-size="12">Component side</text>
+  <text x="895" y="418" text-anchor="middle" font-size="15" font-weight="680">ST7735S display</text>
+  <text class="secondary" x="895" y="437" text-anchor="middle" font-size="12">Back side · 3.3 V supply</text>
+  <text class="secondary" x="34" y="547" font-size="13">SCK = SCL · A0 = RS/DC · RESET = RST · VCC connects to 3V3</text>
+</svg>
