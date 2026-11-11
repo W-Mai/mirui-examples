@@ -58,10 +58,7 @@ The demo defaults to a 32 KiB task stack with `CONFIG_DEBUG_FULLOPT=y` (Cargo re
 
 ## Toolchain
 
-NuttX is rustc tier-3 — needs nightly + `rust-src` component +
-`-Zbuild-std=std,panic_abort`. NuttX `apps/tools/Rust.mk` handles the
-flags. Pin a known-green nightly in `rust-toolchain.toml` if the
-default rolls forward and breaks `-Zbuild-std`.
+NuttX requires nightly and the `rust-src` component. NuttX's `apps/tools/Rust.mk` supplies the `-Zbuild-std=std,panic_abort` flags. CI builds both profiles for `riscv32imac-unknown-nuttx-elf` with `nightly-2026-11-11`.
 
 ## Status
 
