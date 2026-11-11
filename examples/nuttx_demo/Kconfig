@@ -30,9 +30,10 @@ config EXAMPLES_RUST_MIRUI_DEMO_PRIORITY
 
 config EXAMPLES_RUST_MIRUI_DEMO_STACKSIZE
 	int "Stack size"
-	default 32768
+	default 32768 if DEBUG_FULLOPT
+	default 65536
 	---help---
-		8 KiB minimum based on the slint / hello rust precedent.
-		Smaller stacks deadlock libstd's TLS init.
+		Unoptimized Rust builds need more stack for layout and text
+		measurement. The defaults cover the widgets demo on rv-virt:fb.
 
 endif

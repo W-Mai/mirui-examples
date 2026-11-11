@@ -54,6 +54,8 @@ qemu-system-riscv32 -semihosting -M virt -cpu rv32 -smp 8 -bios none \
 nsh> mirui
 ```
 
+The demo defaults to a 32 KiB task stack with `CONFIG_DEBUG_FULLOPT=y` (Cargo release) and 64 KiB otherwise (Cargo debug). When switching an existing NuttX configuration to debug, check `CONFIG_EXAMPLES_RUST_MIRUI_DEMO_STACKSIZE`: a saved 32 KiB value overrides the new default and can overflow during the first layout. Set it to 65536 before rebuilding.
+
 ## Toolchain
 
 NuttX is rustc tier-3 — needs nightly + `rust-src` component +
