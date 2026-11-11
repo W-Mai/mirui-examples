@@ -1,0 +1,60 @@
+name: NuttX example build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "examples/nuttx_demo/**"
+      - ".cargo/config.toml"
+      - ".github/workflows/nuttx-example.yml"
+  pull_request:
+    paths:
+      - "examples/nuttx_demo/**"
+      - ".cargo/config.toml"
+      - ".github/workflows/nuttx-example.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RUSTUP_TOOLCHAIN: nightly-2026-02-01
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: NuttX (${{ matrix.profile }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [dev, release]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      # The sysroot patch belongs to the pinned nightly, independently of Cargo.lock updates.
+      - uses: actions/checkout@v4
+        with:
+          repository: W-Mai/mirui
+          ref: 65bf7b47065f2710f4cd6adf4b717ee314b888bd
+          path: .nuttx-toolchain
+          sparse-checkout: ci/patch-nuttx-libstd.sh
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare the NuttX Rust sysroot
+        run: |
+          rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
+          rustup component add rust-src --toolchain "$RUSTUP_TOOLCHAIN"
+          bash .nuttx-toolchain/ci/patch-nuttx-libstd.sh "$RUSTUP_TOOLCHAIN"
+      - name: Build the example static library
+        env:
+          PROFILE: ${{ matrix.profile }}
+        run: |
+          if [[ "$PROFILE" == release ]]; then
+            export RUSTFLAGS="-Zunstable-options -Cpanic=immediate-abort"
+          fi
+          cargo build --locked --manifest-path examples/nuttx_demo/Cargo.toml \
+            --profile "$PROFILE" --target riscv32imac-unknown-nuttx-elf \
+            -Zbuild-std=std,panic_abort
