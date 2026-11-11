@@ -1,6 +1,13 @@
-# mirui-examples
+<a href="https://github.com/W-Mai/mirui">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg" />
+    <img src="assets/logo-light.svg" alt="Mirui" width="252" />
+  </picture>
+</a>
 
-Hardware examples for [Mirui](https://github.com/W-Mai/mirui), with ESP32-C3 firmware and a NuttX framebuffer demo.
+# Hardware examples
+
+ESP32-C3 firmware and a NuttX framebuffer demo.
 
 [Examples](#examples) · [Wiring](#esp32-c3-wiring) · [Quick start](#esp32-c3-quick-start) · [Demo features](#demo-features)
 
