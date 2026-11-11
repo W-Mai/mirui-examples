@@ -1,46 +1,57 @@
 # mirui-examples
 
-Hardware examples for [mirui](https://github.com/W-Mai/mirui) — running on real MCUs.
+Hardware examples for [Mirui](https://github.com/W-Mai/mirui), with ESP32-C3 firmware and a NuttX framebuffer demo.
 
-## Hardware
+[Examples](#examples) · [Wiring](#esp32-c3-wiring) · [Quick start](#esp32-c3-quick-start) · [Demo features](#demo-features)
 
-- **MCU**: ESP32-C3 Super Mini
-- **Display**: ST7735S 128×128 SPI TFT (MSP1443)
+## Examples
 
-The animation and chord prompter examples use the same wiring.
+- **[ESP32-C3 Animation](examples/esp32c3-animation/)** · Gallery demos, dirty-region rendering, input timelines, curve text, effects and performance probes. [Build and flash](#esp32-c3-quick-start).
+- **[ESP32-C3 Chord Prompter](examples/esp32c3-chord-prompter/README.md)** · Browser BLE song uploads, chord prompting and beat-aligned controls.
+- **[NuttX Widgets](examples/nuttx_demo/README.md)** · Framebuffer, touch and keyboard integration with partial refresh and RGB565/RGBA8888 support. The reference target is `rv-virt:fb` with QEMU virtio-gpu.
 
-![ESP32-C3 Super Mini to ST7735S TFT wiring diagram](assets/esp32c3-st7735s-wiring.svg)
+## ESP32-C3 wiring
 
-| Display | GPIO |
-|---------|------|
-| SCL | 5 |
-| SDA | 4 |
-| CS | 6 |
-| RS/DC | 7 |
-| RST | 3 |
-| LED | 2 |
-| 3V3 | 3V3 |
-| GND | GND |
+Both ESP32-C3 examples use a Super Mini and an MSP1443 ST7735S 128 × 128 SPI display. Open the diagram to zoom in.
 
-## Prerequisites
+[![ESP32-C3 Super Mini to ST7735S TFT wiring diagram](assets/esp32c3-st7735s-wiring.svg)](assets/esp32c3-st7735s-wiring.svg)
+
+<details>
+<summary>Pin reference</summary>
+
+| Display pin | ESP32-C3 | Function |
+| --- | --- | --- |
+| `SCK` / `SCL` | `GPIO5` | SPI clock |
+| `SDA` | `GPIO4` | SPI data (MOSI) |
+| `CS` | `GPIO6` | Chip select |
+| `A0` / `RS/DC` | `GPIO7` | Data / command |
+| `RESET` / `RST` | `GPIO3` | Display reset |
+| `LED` | `GPIO2` | Backlight |
+| `VCC` / `3V3` | `3V3` | 3.3 V supply |
+| `GND` | `GND` | Ground |
+
+</details>
+
+## ESP32-C3 quick start
+
+### 1. Install tools
 
 - Rust nightly (edition 2024)
 - Target: `rustup target add riscv32imc-unknown-none-elf`
 - Flash tool: `cargo install espflash`
 - PlatformIO (bootloader only): `pip install platformio`
 
-## First Time: Flash Bootloader
+### 2. Flash the bootloader
 
-ESP32-C3 Super Mini (chip rev v0.4) requires a compatible bootloader with `min_chip_rev=0`. **Flash once**:
+ESP32-C3 Super Mini (chip rev v0.4) requires a compatible bootloader with `min_chip_rev=0`. Run this once from the repository root.
 
 ```bash
-cd bootloader
-pio run -t upload
+(cd bootloader && pio run -t upload)
 ```
 
-This installs an ESP-IDF bootloader that accepts any chip revision. All Rust examples will boot normally after this.
+This installs an ESP-IDF bootloader that accepts any chip revision.
 
-## Running an Example
+### 3. Build and flash the animation example
 
 ```bash
 cd examples/esp32c3-animation
@@ -52,49 +63,16 @@ espflash flash target/riscv32imc-unknown-none-elf/release/mirui-esp32c3 \
 
 > Serial port name may vary. Use `ls /dev/cu.usb*` to find yours.
 
-## Release optimization
+### Release optimization
 
 The ESP32-C3 animation example uses optimization level 3, LTO, and one codegen unit for rendering throughput. This produces a larger application image than size optimization. For a size-sensitive build, run `CARGO_PROFILE_RELEASE_OPT_LEVEL=z cargo build --release` and check the generated image against the device partition size.
 
-## Local mirui Development
-
-By default this repo pulls `mirui` and `mirui-macros` from their
-published git source — anyone can `git clone` and `cargo build` without
-a sibling mirui checkout. To work against an unpublished mirui
-working tree (e.g. while iterating on framework code in `../miru`),
-edit the workspace-level `.cargo/config.toml` and uncomment the
-`paths` override at the bottom of the file. The exact paths depend on
-your layout; the defaults assume mirui sits next to this repo.
-
-After editing, tell git to ignore your local changes to that file so
-they don't get committed by accident:
-
-```bash
-git update-index --skip-worktree .cargo/config.toml
-```
-
-To resume tracking edits (e.g. to commit a new shared alias or build
-setting), reverse it:
-
-```bash
-git update-index --no-skip-worktree .cargo/config.toml
-```
-
-`cargo build` will warn that `paths` overrides are deprecated; that's
-expected and harmless. The override only affects builds in this
-repo's tree.
-
-## Examples
-
-| Directory | Verified target | Display | Description |
-|-----------|-----------------|---------|-------------|
-| `esp32c3-animation` | ESP32-C3 Super Mini | ST7735S 128 × 128 SPI | Autonomous gallery demos, dirty-region rendering, input timelines, curve text, effects, and performance probes |
-| `esp32c3-chord-prompter` | ESP32-C3 Super Mini | ST7735S 128 × 128 SPI | Browser BLE song uploads, chord prompting and beat-aligned controls |
-| `nuttx_demo` | NuttX `rv-virt:fb` | `/dev/fb0` through QEMU virtio-gpu | Framebuffer, touch, keyboard, partial refresh, and RGB565/RGBA8888 integration |
-
-## ESP32-C3 demo features
+## Demo features
 
 Select one `demo-*` feature with `--no-default-features`; `demo-threebody` is the default.
+
+<details>
+<summary>Available demos</summary>
 
 | Feature | Content |
 |---------|---------|
@@ -112,11 +90,13 @@ Select one `demo-*` feature with `--no-default-features`; `demo-threebody` is th
 | `demo-typography` | Gallery Typography Lab with bundled MIRX fonts |
 | `demo-interaction` | Gallery Interaction Lab with typed input handlers |
 
+</details>
+
 The three-body scene registers only the Style and Image views it uses. Other App scenes enable the complete widget catalog through their feature dependencies; combining them with the three-body feature preserves that registration.
 
 `perf-fps`, `perf-trace`, `perf-plan-probe`, `frame-capture`, `fps-overlay`, and `spin` add diagnostics or optional animation behavior. Performance reports distinguish operation wall time, callback cadence and phase budgets; callback cadence is not native display refresh. `demo-hidpi-downscale` and `demo-hidpi-upscale` change the logical viewport used by the three-body demo.
 
-## Offscreen framebuffer diagnostic
+### Offscreen framebuffer diagnostic
 
 Build the UART-only diagnostic with `cargo build --release --no-default-features --features esp-test-offscreen` from `examples/esp32c3-animation`. It does not initialize the LCD or SPI peripherals. Running the firmware emits eight RGB565Swapped frames between `[FB_BEGIN]` and `[FB_END]`, with base64 `[FB]` lines and FNV-1a hashes. Form-level and Switch-only captures check state changes; clipped regions must match the corresponding full-frame pixels and leave pixels outside the clip cleared. A failed render or comparison panics instead of printing a successful completion marker. `[TEST] done` indicates all checks finished.
 
@@ -140,3 +120,21 @@ The diagnostic uses App preparation for text and output storage, then exercises 
 
 - esp-hal 1.1 requires a custom bootloader for ESP32-C3 rev v0.4 chips
 - SPI stable at 26MHz; 40MHz causes artifacts over jumper wires
+
+## Local Mirui development
+
+By default this repo pulls `mirui` and `mirui-macros` from their published git source — anyone can `git clone` and `cargo build` without a sibling mirui checkout. To work against an unpublished mirui working tree (e.g. while iterating on framework code in `../miru`), edit the workspace-level `.cargo/config.toml` and uncomment the `paths` override at the bottom of the file. The exact paths depend on your layout; the defaults assume mirui sits next to this repo.
+
+After editing, tell git to ignore your local changes to that file so they don't get committed by accident:
+
+```bash
+git update-index --skip-worktree .cargo/config.toml
+```
+
+To resume tracking edits (e.g. to commit a new shared alias or build setting), reverse it:
+
+```bash
+git update-index --no-skip-worktree .cargo/config.toml
+```
+
+`cargo build` will warn that `paths` overrides are deprecated; that's expected and harmless. The override only affects builds in this repo's tree.
