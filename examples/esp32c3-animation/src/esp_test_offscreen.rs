@@ -243,7 +243,8 @@ fn dump(label: &str, bytes: &[u8], report: &mut impl FnMut(Arguments<'_>)) {
 fn render_and_dump(label: &str, app: &mut TestApp, report: &mut impl FnMut(Arguments<'_>)) -> u64 {
     app.render().expect("prepare and render diagnostic frame");
     let texture = app.backend.framebuffer();
-    let bytes = texture.buf.as_slice();
+    let pixels = texture.read_pixels().expect("read diagnostic pixels");
+    let bytes = pixels.bytes();
     assert!(
         bytes.iter().any(|byte| *byte != 0),
         "empty diagnostic frame"
@@ -278,22 +279,31 @@ fn render_region_and_check(
     report: &mut impl FnMut(Arguments<'_>),
 ) {
     app.render().expect("prepare region reference frame");
-    let expected = clipped_hash(app.backend.framebuffer().buf.as_slice(), area);
+    let expected = {
+        let texture = app.backend.framebuffer();
+        let pixels = texture.read_pixels().expect("read reference pixels");
+        clipped_hash(pixels.bytes(), area)
+    };
     let viewport = app.backend.viewport();
     let mut texture = app.backend.framebuffer();
-    texture.buf.as_mut_slice().fill(0);
+    texture
+        .pixels_mut()
+        .expect("write diagnostic pixels")
+        .bytes_mut()
+        .fill(0);
     {
         let mut renderer = SwRenderer::new(texture);
         render_system::render_region(&app.world, root, &viewport, &area, &mut renderer)
             .expect("render diagnostic region");
     }
     let texture = app.backend.framebuffer();
+    let pixels = texture.read_pixels().expect("read clipped pixels");
     assert_eq!(
-        fnv1a_64(texture.buf.as_slice()),
+        fnv1a_64(pixels.bytes()),
         expected,
         "clipped pixels differ from full frame"
     );
-    dump(label, texture.buf.as_slice(), report);
+    dump(label, pixels.bytes(), report);
 }
 
 /// Emit deterministic frames without touching display peripherals.

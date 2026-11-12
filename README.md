@@ -103,6 +103,8 @@ Build the UART-only diagnostic with `cargo build --release --no-default-features
 
 The diagnostic uses App preparation for text and output storage, then exercises the low-level region renderer. Its direct ECS mutations isolate raster behavior from animation and input handling; they are not the application authoring API.
 
+The [ESP32-C3 workflow](.github/workflows/esp32c3-examples.yml) builds both release firmwares with their lockfiles and runs the offscreen diagnostic in Espressif QEMU. The runtime job requires all eight frame checks and saves the emulator and serial logs. The SPI display and BLE radio use physical device checks.
+
 ## Target status
 
 | Target | Status | Notes |
