@@ -58,7 +58,21 @@ The demo defaults to a 32 KiB task stack with `CONFIG_DEBUG_FULLOPT=y` (Cargo re
 
 ## Toolchain
 
-NuttX requires nightly and the `rust-src` component. NuttX's `apps/tools/Rust.mk` supplies the `-Zbuild-std=std,panic_abort` flags. CI builds both profiles for `riscv32imac-unknown-nuttx-elf` with `nightly-2026-11-11`.
+NuttX requires nightly and the `rust-src` component. NuttX's `apps/tools/Rust.mk` supplies the `-Zbuild-std=std,panic_abort` flags. CI uses `nightly-2026-11-11` and builds both profiles for `riscv32imac-unknown-nuttx-elf`.
+
+## Runtime checks
+
+The [NuttX workflow](../../.github/workflows/nuttx-example.yml) builds and boots a fresh kernel with the example linked in each profile. The check starts `mirui` from NSH, verifies two distinct Widgets frames on the VirtIO display, and checks that the task is still running. The job records the serial log, QEMU log, and framebuffer captures.
+
+To run the same check locally, use the NuttX and apps revisions listed in the workflow. Put the two clean checkouts next to one another with the apps checkout named `apps`. Run the following from the Examples checkout with the cross compiler, NuttX Kconfig tools, and QEMU on `PATH`:
+
+```bash
+export RUSTUP_TOOLCHAIN=nightly-2026-11-11
+bash ci/build-nuttx.sh /path/to/nuttx dev   # or release with a separate clean tree
+python3 ci/test-nuttx.py /path/to/nuttx/nuttx /path/to/disk.qcow2 nuttx-results
+```
+
+The test opens the supplied qcow2 disk in snapshot mode. It checks rendering and task liveness; touch, keyboard, and frame pacing require separate validation.
 
 ## Status
 

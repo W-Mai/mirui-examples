@@ -1,4 +1,4 @@
-name: NuttX example build
+name: NuttX example
 
 on:
   push:
@@ -7,11 +7,13 @@ on:
       - "examples/nuttx_demo/**"
       - ".cargo/config.toml"
       - ".github/workflows/nuttx-example.yml"
+      - "ci/*nuttx*"
   pull_request:
     paths:
       - "examples/nuttx_demo/**"
       - ".cargo/config.toml"
       - ".github/workflows/nuttx-example.yml"
+      - "ci/*nuttx*"
   workflow_dispatch:
 
 permissions:
@@ -22,10 +24,10 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    name: NuttX (${{ matrix.profile }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  runtime:
+    name: NuttX Widgets (${{ matrix.profile }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -34,15 +36,38 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: apache/nuttx
+          ref: 0afb8c7ad508a79a3f5b14cf0360fea24609edaf
+          path: nuttx-build/nuttx
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: apache/nuttx-apps
+          ref: c106a02b586253e2bdcf3e64ccad4b4cc8b6527b
+          path: nuttx-build/apps
+          persist-credentials: false
+      - name: Install cross compiler and emulator
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y bison flex genromfs \
+            gcc-riscv64-unknown-elf kconfig-frontends-nox qemu-system-misc qemu-utils
       - name: Install nightly and rust-src
         run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal --component rust-src
-      - name: Build the example static library
+      - name: Build rv-virt:fb with the example
         env:
           PROFILE: ${{ matrix.profile }}
+        run: bash ci/build-nuttx.sh nuttx-build/nuttx "$PROFILE"
+      - name: Boot the kernel and check live Widgets frames
         run: |
-          if [[ "$PROFILE" == release ]]; then
-            export RUSTFLAGS="-Zunstable-options -Cpanic=immediate-abort"
-          fi
-          cargo build --locked --manifest-path examples/nuttx_demo/Cargo.toml \
-            --profile "$PROFILE" --target riscv32imac-unknown-nuttx-elf \
-            -Zbuild-std=std,panic_abort
+          qemu-img create -f qcow2 nuttx-build/ct.qcow2 64M
+          python3 ci/test-nuttx.py nuttx-build/nuttx/nuttx nuttx-build/ct.qcow2 nuttx-results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nuttx-${{ matrix.profile }}
+          include-hidden-files: true
+          path: |
+            nuttx-build/nuttx/.config
+            nuttx-results/
