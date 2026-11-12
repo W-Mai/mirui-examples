@@ -7,12 +7,14 @@ on:
       - "examples/nuttx_demo/**"
       - ".cargo/config.toml"
       - ".github/workflows/nuttx-example.yml"
+      - ".github/workflows/nuttx-runtime.yml"
       - "ci/*nuttx*"
   pull_request:
     paths:
       - "examples/nuttx_demo/**"
       - ".cargo/config.toml"
       - ".github/workflows/nuttx-example.yml"
+      - ".github/workflows/nuttx-runtime.yml"
       - "ci/*nuttx*"
   workflow_dispatch:
     inputs:
@@ -24,82 +26,12 @@ on:
 permissions:
   contents: read
 
-env:
-  RUSTUP_TOOLCHAIN: nightly-2026-11-11
-  CARGO_TERM_COLOR: always
-  CARGO_INCREMENTAL: "0"
-  NUTTX_REF: 0afb8c7ad508a79a3f5b14cf0360fea24609edaf
-  APPS_REF: c106a02b586253e2bdcf3e64ccad4b4cc8b6527b
-
 jobs:
   runtime:
-    name: NuttX Widgets (${{ matrix.profile }})
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        profile: [dev, release]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Restore NuttX source archives
-        if: "!inputs.cold"
-        id: sources
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ runner.temp }}/nuttx-inputs
-          key: nuttx-inputs-v1-${{ env.NUTTX_REF }}-${{ env.APPS_REF }}
-      - name: Prepare fresh source trees
-        run: bash ci/prepare-nuttx.sh "$RUNNER_TEMP/nuttx-inputs" nuttx-build "$NUTTX_REF" "$APPS_REF"
-      - name: Install cross compiler and emulator
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y bison flex genromfs \
-            gcc-riscv64-unknown-elf kconfig-frontends-nox qemu-system-misc qemu-utils
-      - name: Install nightly and rust-src
-        run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal --component rust-src
-      - name: Restore Rust build dependencies
-        if: "!inputs.cold"
-        id: rust-cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: examples/nuttx_demo
-          key: rv32imac-${{ matrix.profile }}-${{ env.NUTTX_REF }}-${{ env.APPS_REF }}-${{ hashFiles('ci/build-nuttx.sh') }}
-          cache-bin: false
-          save-if: ${{ github.ref == 'refs/heads/main' }}
-      - name: Build rv-virt:fb with the example
-        env:
-          PROFILE: ${{ matrix.profile }}
-        run: bash ci/build-nuttx.sh nuttx-build/nuttx "$PROFILE"
-      - name: Boot the kernel and check live Widgets frames
-        run: |
-          qemu-img create -f qcow2 nuttx-build/ct.qcow2 64M
-          python3 ci/test-nuttx.py nuttx-build/nuttx/nuttx nuttx-build/ct.qcow2 nuttx-results
-      - name: Save NuttX source archives
-        if: "!inputs.cold && matrix.profile == 'release' && github.ref == 'refs/heads/main' && steps.sources.outputs.cache-hit != 'true'"
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ runner.temp }}/nuttx-inputs
-          key: ${{ steps.sources.outputs.cache-primary-key }}
-      - name: Record cache status and build inputs
-        if: always()
-        env:
-          PROFILE: ${{ matrix.profile }}
-          SOURCE_HIT: ${{ steps.sources.outputs.cache-hit }}
-          RUST_HIT: ${{ steps.rust-cache.outputs.cache-hit }}
-        run: |
-          {
-            echo "NuttX $PROFILE: $NUTTX_REF / apps $APPS_REF / $RUSTUP_TOOLCHAIN"
-            echo "Source archives: ${SOURCE_HIT:-not restored}; Rust: ${RUST_HIT:-not restored}"
-            if test -d "$RUNNER_TEMP/nuttx-inputs"; then du -sh "$RUNNER_TEMP/nuttx-inputs"; fi
-          } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: nuttx-${{ matrix.profile }}
-          include-hidden-files: true
-          path: |
-            nuttx-build/nuttx/.config
-            nuttx-results/
+    uses: ./.github/workflows/nuttx-runtime.yml
+    with:
+      # Apache NuttX 13.1.0
+      nuttx_ref: 2b5c0de5e933281c209f954a63b99cf10c132346
+      apps_ref: 3c772ea35b9245972e18999828f7b533e6fc57cc
+      cold: ${{ inputs.cold || false }}
+      save_cache: true

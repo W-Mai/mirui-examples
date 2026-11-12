@@ -1,0 +1,46 @@
+name: NuttX upstream compatibility
+
+on:
+  schedule:
+    - cron: "23 2 * * 2"
+  workflow_dispatch:
+    inputs:
+      upstream:
+        description: Latest release, upstream HEAD, or an exact release number
+        type: string
+        default: latest
+      cold:
+        description: Run without restoring or saving caches
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    name: Resolve NuttX and apps revisions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      nuttx_ref: ${{ steps.revisions.outputs.nuttx_ref }}
+      apps_ref: ${{ steps.revisions.outputs.apps_ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Resolve upstream sources
+        id: revisions
+        shell: bash
+        env:
+          UPSTREAM: ${{ inputs.upstream || 'latest' }}
+          GIT_TERMINAL_PROMPT: "0"
+        run: python3 ci/resolve-nuttx.py "$UPSTREAM" | tee -a "$GITHUB_OUTPUT" "$GITHUB_STEP_SUMMARY"
+  runtime:
+    needs: resolve
+    uses: ./.github/workflows/nuttx-runtime.yml
+    with:
+      nuttx_ref: ${{ needs.resolve.outputs.nuttx_ref }}
+      apps_ref: ${{ needs.resolve.outputs.apps_ref }}
+      cold: ${{ inputs.cold || false }}
+      save_cache: ${{ github.event_name == 'schedule' }}

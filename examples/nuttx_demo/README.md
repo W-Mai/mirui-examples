@@ -76,6 +76,8 @@ The test opens the supplied qcow2 disk in snapshot mode. It checks rendering and
 
 CI caches the pinned upstream source archives and Rust dependencies. Each job extracts fresh sources, links the example into its kernel, and runs the display check. Use the workflow's `cold` option to measure a run with cache reads and writes disabled.
 
+The [upstream compatibility workflow](../../.github/workflows/nuttx-upstream.yml) checks the latest Apache release weekly using the same debug and release jobs. It records the selected OS and apps commits. Run it manually with `head` for both upstream default branches or enter a release number such as `13.1.0`. Update both pinned commits together after the candidate passes both runtime checks.
+
 ## Status
 
 - Framebuffer: `/dev/fbN` via `FBIOGET_VIDEOINFO` / `FBIOGET_PLANEINFO`,
