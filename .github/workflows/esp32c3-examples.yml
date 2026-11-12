@@ -8,13 +8,20 @@ on:
       - ".cargo/config.toml"
       - ".github/workflows/esp32c3-examples.yml"
       - "ci/test-esp32c3.py"
+      - "ci/prepare-esp32c3-tools.sh"
   pull_request:
     paths:
       - "examples/esp32c3-*/**"
       - ".cargo/config.toml"
       - ".github/workflows/esp32c3-examples.yml"
       - "ci/test-esp32c3.py"
+      - "ci/prepare-esp32c3-tools.sh"
   workflow_dispatch:
+    inputs:
+      cold:
+        description: Run without restoring or saving caches
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -22,6 +29,7 @@ permissions:
 env:
   RUSTUP_TOOLCHAIN: "1.97.0"
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
 
 jobs:
   firmware:
@@ -41,26 +49,36 @@ jobs:
           persist-credentials: false
       - name: Install Rust and the RV32IMC target
         run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal --target riscv32imc-unknown-none-elf
+      - name: Restore Rust build dependencies
+        if: "!inputs.cold"
+        id: rust-cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: examples/esp32c3-${{ matrix.example }}
+          key: rv32imc-release-${{ matrix.example }}-${{ hashFiles('.github/workflows/esp32c3-examples.yml') }}
+          cache-bin: false
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build the firmware
         run: cargo build --locked --release
       - name: Build the offscreen diagnostic
         if: matrix.example == 'animation'
         run: cargo build --locked --release --no-default-features --features esp-test-offscreen
-      - name: Install Espressif QEMU and espflash
+      - name: Install emulator system libraries
         if: matrix.example == 'animation'
-        working-directory: ${{ runner.temp }}
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y libgcrypt20 libglib2.0-0t64 \
             libpixman-1-0 libsdl2-2.0-0 libslirp0
-          curl --fail --location --retry 3 -o qemu.tar.xz \
-            https://github.com/espressif/qemu/releases/download/esp-develop-9.2.2-20261109/qemu-riscv32-softmmu-esp_develop_9.2.2_20261109-x86_64-linux-gnu.tar.xz
-          echo 'afa59465495295b8aa4f804768983fa30b0bbf33d0f68a047f9caa436b9164c0  qemu.tar.xz' | sha256sum -c
-          tar -xf qemu.tar.xz
-          curl --fail --location --retry 3 -o espflash.zip \
-            https://github.com/esp-rs/espflash/releases/download/v4.4.0/espflash-x86_64-unknown-linux-gnu.zip
-          echo 'ac2031bd1f04c9107d9ba0e977535daa885a9f533f937dc369debd77f83665cd  espflash.zip' | sha256sum -c
-          unzip espflash.zip
+      - name: Restore emulator and flash tool archives
+        if: "matrix.example == 'animation' && !inputs.cold"
+        id: tools
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/esp32c3-archives
+          key: esp32c3-tools-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('ci/prepare-esp32c3-tools.sh') }}
+      - name: Verify and unpack emulator and flash tool
+        if: matrix.example == 'animation'
+        run: bash "$GITHUB_WORKSPACE/ci/prepare-esp32c3-tools.sh" "$RUNNER_TEMP/esp32c3-archives" "$RUNNER_TEMP"
       - name: Run the diagnostic and check rendered frames
         if: matrix.example == 'animation'
         run: |
@@ -68,6 +86,22 @@ jobs:
             target/riscv32imc-unknown-none-elf/release/mirui-esp32c3 "$RUNNER_TEMP/offscreen.bin"
           python3 "$GITHUB_WORKSPACE/ci/test-esp32c3.py" "$RUNNER_TEMP/qemu/bin/qemu-system-riscv32" \
             "$RUNNER_TEMP/offscreen.bin" "$GITHUB_WORKSPACE/esp32c3-results"
+      - name: Save emulator and flash tool archives
+        if: "matrix.example == 'animation' && !inputs.cold && github.ref == 'refs/heads/main' && steps.tools.outputs.cache-hit != 'true'"
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/esp32c3-archives
+          key: ${{ steps.tools.outputs.cache-primary-key }}
+      - name: Record cache status
+        if: always()
+        env:
+          TOOLS_HIT: ${{ steps.tools.outputs.cache-hit }}
+          RUST_HIT: ${{ steps.rust-cache.outputs.cache-hit }}
+        run: |
+          {
+            echo "Tools: ${TOOLS_HIT:-not restored}; Rust: ${RUST_HIT:-not restored}"
+            if test -d "$RUNNER_TEMP/esp32c3-archives"; then du -sh "$RUNNER_TEMP/esp32c3-archives"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always() && matrix.example == 'animation'
         with:

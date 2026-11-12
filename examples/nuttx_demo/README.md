@@ -74,6 +74,8 @@ python3 ci/test-nuttx.py /path/to/nuttx/nuttx /path/to/disk.qcow2 nuttx-results
 
 The test opens the supplied qcow2 disk in snapshot mode. It checks rendering and task liveness; touch, keyboard, and frame pacing require separate validation.
 
+CI caches the pinned upstream source archives and Rust dependencies. Each job extracts fresh sources, links the example into its kernel, and runs the display check. Use the workflow's `cold` option to measure a run with cache reads and writes disabled.
+
 ## Status
 
 - Framebuffer: `/dev/fbN` via `FBIOGET_VIDEOINFO` / `FBIOGET_PLANEINFO`,
