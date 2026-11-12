@@ -105,6 +105,16 @@ The diagnostic uses App preparation for text and output storage, then exercises 
 
 The [ESP32-C3 workflow](.github/workflows/esp32c3-examples.yml) builds both release firmwares with their lockfiles and runs the offscreen diagnostic in Espressif QEMU. The runtime job requires all eight frame checks and saves the emulator and serial logs. The SPI display and BLE radio use physical device checks.
 
+### Physical LCD check
+
+Build the animation with `cargo build --release --locked --features perf-fps`, then flash it using the [normal board instructions](#3-build-and-flash-the-animation-example). From the repository root, run the check with `pyserial` installed in the test environment and the port of the board being tested:
+
+```bash
+python3 ci/test-esp32c3-device.py lcd /dev/cu.usbmodem1101
+```
+
+The check requires two tick reports with completed SPI flushes. Check the physical LCD for three moving images and clean edges. The [Chord Prompter BLE check](examples/esp32c3-chord-prompter/README.md#physical-ble-check) uses the same board with its own firmware.
+
 ## Target status
 
 | Target | Status | Notes |

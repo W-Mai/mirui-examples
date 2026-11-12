@@ -19,6 +19,17 @@ The port varies by host. The application uses a 200 KiB heap, a single BLE conne
 
 The shared `chord_prompter` demo must be present in the MIRUI git revision being built. Local development can use the sibling checkout overrides documented in the repository README.
 
+### Physical BLE check
+
+Flash the release firmware on the test board. With `bleak` installed and Bluetooth available in the test environment, run these commands from the repository root:
+
+```bash
+python3 ci/test-esp32c3-device.py scan
+python3 ci/test-esp32c3-device.py ble "$PROMPTER_ADDRESS"
+```
+
+Set `PROMPTER_ADDRESS` to the test board's address from the scan, which is a CoreBluetooth UUID on macOS. The check replaces the current score with a test fixture, confirms its generation and playback progress, reconnects, and stops playback using a fresh command sequence.
+
 ## Browser controls
 
 Open `/chord-prompter/` on the MIRUI gallery host in Chrome or Arc on desktop, or Chrome on Android. For local development, run `trunk serve` in MIRUI's `gallery/web` directory and open `http://localhost:8080/chord-prompter/`. HTTPS or localhost is required for Web Bluetooth. Click **Connect display** and select **MIRUI Chord** in the browser chooser.
